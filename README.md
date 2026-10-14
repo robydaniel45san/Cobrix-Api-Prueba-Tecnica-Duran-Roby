@@ -40,6 +40,22 @@ En **Sincronización** están también las dos acciones del enunciado por separa
 
 Para volver al estado inicial, detén el servidor, borra `data/cobrix/` (datos de Cobrix) y restablece el sandbox con `POST /__sim/reiniciar` desde el Swagger.
 
+## Capturas
+
+Tomadas con los datos de la prueba después del ciclo de §5 del enunciado.
+
+| | |
+|---|---|
+| ![Inicio](docs/capturas/panel/01-inicio.png) **Inicio:** si los datos del ISP están al día, cuánto hay por cobrar, a quién cobrar primero y qué necesita atención. | ![Revisar cambios](docs/capturas/panel/02-revisar-cambios.png) **Revisar cambios:** toda sincronización empieza con una vista previa que explica qué cambiaría; nada se aplica sin confirmar. |
+| ![Sincronización](docs/capturas/panel/03-sincronizacion.png) **Sincronización:** las dos acciones del enunciado, más «Sincronizar todo», y el historial. | ![Detalle](docs/capturas/panel/04-detalle-sincronizacion.png) **Detalle:** qué cambió, una fila por cuota con su motivo y los contadores técnicos. |
+| ![Clientes](docs/capturas/panel/05-clientes.png) **Clientes:** búsqueda por nombre, cédula o RIF y filtros por situación. | ![Expediente](docs/capturas/panel/06-expediente.png) **Expediente:** deuda, contacto, facturas, contratos e historial. |
+| ![Configuración](docs/capturas/panel/07-configuracion.png) **Configuración:** por categorías, con la contraseña cifrada. | ![Asistente](docs/capturas/panel/08-asistente.png) **Asistente de primera vez:** cuatro pasos guiados hasta la primera vista previa. |
+
+<p>
+  <img src="docs/capturas/panel/09-inicio-telefono.png" alt="Inicio en teléfono" width="240">
+  <img src="docs/capturas/panel/10-expediente-telefono.png" alt="Expediente en teléfono" width="240">
+</p>
+
 ## Pruebas
 
 ```bash
