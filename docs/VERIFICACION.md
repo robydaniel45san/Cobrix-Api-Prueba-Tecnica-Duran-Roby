@@ -59,19 +59,19 @@ Verificados de dos maneras: con la prueba automática `ciclo.test.ts` y ejecutan
 | Topes por corrida (cantidad y monto) | `application/import-invoices.ts` | `robustez`: lo que excede queda frenado |
 | Excluir por tipo de documento | `import-rules.ts` | `reglas`: excluye por tipo de documento |
 | Corrida automática diaria (America/Caracas) | `application/scheduler.ts` | `servidor`: corre una vez al día a la hora configurada |
-| **3.2 Importar** y **simular importación** | `import-invoices.ts`, dos fases | `ciclo`: simular e importar |
-| **3.3 Actualizar pagadas** y **simular** | `application/update-paid.ts` | `ciclo`: 8 pagadas, simulación sin escrituras |
-| **3.4 Historial:** tipo, fecha, simulación, estado, resumen | `GET /api/runs` · pantalla Sincronización | Revisado en el navegador |
-| Detalle con contadores y una fila por cuota con resultado y motivo | `GET /api/runs/:id` · pantalla de corrida | `ciclo`: cada cuota queda en el detalle |
+| **3.2 Importar** y **simular importación** | `import-invoices.ts`, dos fases · panel: «Traer facturas nuevas» → vista previa (simulación) → aplicar | `ciclo`: simular e importar · recorrido en el navegador |
+| **3.3 Actualizar pagadas** y **simular** | `application/update-paid.ts` · panel: «Revisar cobros del ISP» → vista previa → aplicar | `ciclo`: 8 pagadas, simulación sin escrituras · recorrido en el navegador |
+| **3.4 Historial:** tipo, fecha, simulación, estado, resumen | `GET /api/runs` · Sincronización › Historial, con filtros por aplicadas, vistas previas y fallidas | Revisado en el navegador |
+| Detalle con contadores y una fila por cuota con resultado y motivo | `GET /api/runs/:id` · detalle de sincronización: resumen explicado, tabla por cuota y detalle técnico | `ciclo`: cada cuota queda en el detalle |
 | Corrida fallida registrada con el error | `runs.fail` | `robustez`: credenciales malas |
 | **3.5 Clientes:** búsqueda por nombre, cédula o RIF; columnas pedidas | `GET /api/customers` · pantalla Clientes | `servidor`: búsqueda con separadores |
 | **3.6 Expediente:** datos, contratos, facturas, historial | `GET /api/customers/:id` · pantalla Expediente | `servidor`: expediente completo |
 | **3.7 UI:** estados visibles, montos con moneda, fechas legibles | Insignias por estado, `USD 1.235,00`, `1 oct 2026` | Revisado en el navegador |
 | Vacíos que expliquen qué hacer | Estados vacíos con acción en cada pantalla | Revisado en el navegador |
-| Confirmación antes de acciones destructivas | Diálogo antes de Importar y Actualizar pagadas | Revisado en el navegador |
+| Confirmación antes de acciones destructivas | Toda sincronización pasa por «Revisa los cambios antes de aplicarlos»: nada se escribe sin ver la vista previa y pulsar «Aplicar cambios» | Revisado en el navegador |
 | Errores que digan qué pasó y cómo seguir | Mensajes con la acción sugerida; formato único de error | `servidor`: formato de errores |
 | Pantallas angostas | Menú agrupado y plegable: cajón en teléfono, barra de íconos en tablet, barra lateral plegable en escritorio. Tarjetas en lugar de tablas por debajo de 1024 px | Revisado a 375, 768, 1024 y 1440 px; 0 px de desplazamiento horizontal en todas las pantallas |
-| **3.8 Resumen:** totales, proveedor, corrida automática, últimas corridas, accesos rápidos | `GET /api/summary` · pantalla Resumen | `servidor`: totales y antigüedad de la deuda |
+| **3.8 Resumen:** totales, proveedor, corrida automática, últimas corridas, accesos rápidos | `GET /api/summary` · pantalla Inicio (además: a quién cobrar primero y qué necesita atención) | `servidor`: totales y antigüedad de la deuda |
 
 ## 4. Reglas de negocio (§4)
 
