@@ -118,7 +118,7 @@ export function LiveRun({ className }: { className?: string }) {
 					<Loader2 className="size-4 animate-spin" />
 					{KIND_LABEL[progress.kind]}{progress.dryRun && ' · vista previa'}
 				</span>
-				<span className="tabular text-muted">{progress.stage}{progress.total > 0 && ` · ${progress.done} de ${progress.total} contratos`}</span>
+				<span className="text-muted">{progress.stage}{progress.total > 0 && ` · ${progress.done} de ${progress.total} contratos`}</span>
 			</div>
 			<div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
 				<div className={cn('progress-live h-full rounded-full bg-primary transition-[width] duration-300', progress.total === 0 && 'w-1/12')} style={progress.total > 0 ? { width: `${Math.max(percent, 3)}%` } : undefined} />

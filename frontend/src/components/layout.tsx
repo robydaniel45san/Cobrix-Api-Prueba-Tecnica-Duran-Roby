@@ -171,7 +171,7 @@ export function Layout() {
 					<Brand compact={collapsed} />
 				</div>
 				{/* No scroll container on the rail: it would clip the labels that pop out to the right. */}
-				<div className={cn('mt-8 flex-1', !collapsed && 'overflow-y-auto')}><Navigation compact={collapsed} /></div>
+				<div className={cn('mt-8 flex-1', !collapsed && 'no-scrollbar overflow-y-auto')}><Navigation compact={collapsed} /></div>
 				<button
 					type="button"
 					onClick={() => setCollapsed(value => !value)}
@@ -206,7 +206,7 @@ export function Layout() {
 						</div>
 						<Dialog.Title className="sr-only">Menú principal</Dialog.Title>
 						<Dialog.Description className="sr-only">Secciones del panel de Cobrix</Dialog.Description>
-						<div className="mt-8 flex-1 overflow-y-auto"><Navigation onNavigate={() => setDrawerOpen(false)} /></div>
+						<div className="no-scrollbar mt-8 flex-1 overflow-y-auto"><Navigation onNavigate={() => setDrawerOpen(false)} /></div>
 						<CompanyFooter company={company} />
 					</Dialog.Content>
 				</Dialog.Portal>
@@ -255,7 +255,7 @@ function StatusStrip({ summary }: { summary: Summary | undefined }) {
 
 export function PageHeader({ title, description, back, actions, meta }: { title: ReactNode; description?: ReactNode; back?: { to: string; label: string }; actions?: ReactNode; meta?: ReactNode }) {
 	return (
-		<div className="mb-8">
+		<div className="mb-6">
 			{back && (
 				<Link to={back.to} className="mb-2 inline-flex items-center gap-1 text-sm text-muted hover:text-primary">
 					<ArrowLeft className="size-3.5" /> {back.label}
@@ -263,8 +263,8 @@ export function PageHeader({ title, description, back, actions, meta }: { title:
 			)}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 				<div className="min-w-0">
-					<h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-					{description && <p className="mt-1 max-w-3xl text-sm text-muted">{description}</p>}
+					<h1 className="text-[28px] font-bold leading-tight">{title}</h1>
+					{description && <p className="mt-1 max-w-3xl text-[15px] text-muted">{description}</p>}
 					{meta && <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">{meta}</div>}
 				</div>
 				{actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
@@ -276,11 +276,11 @@ export function PageHeader({ title, description, back, actions, meta }: { title:
 /** A titled group of content inside a page: the unit that categorizes each screen. */
 export function Section({ title, description, actions, children, className }: { title: string; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
 	return (
-		<section className={cn('mt-10 first:mt-0', className)} aria-label={title}>
-			<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+		<section className={cn('mt-8 first:mt-0', className)} aria-label={title}>
+			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
 				<div>
-					<h2 className="text-xs font-semibold uppercase tracking-wider text-muted">{title}</h2>
-					{description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
+					<h2 className="text-[17px] font-semibold">{title}</h2>
+					{description && <p className="text-[13px] text-muted">{description}</p>}
 				</div>
 				{actions && <div className="flex items-center gap-2">{actions}</div>}
 			</div>
@@ -293,7 +293,7 @@ export function StatCard({ label, value, hint, tone, className }: { label: strin
 	return (
 		<div className={cn(
 			// The value always sits right under its label, so neighbouring cards line up even when one has a hint.
-			'flex h-full flex-col rounded-xl border bg-surface px-4 py-3.5 shadow-[0_1px_2px_rgb(16_24_40/0.04)]',
+			'flex h-full flex-col rounded-2xl border bg-surface px-5 py-4',
 			tone === 'primary' ? 'border-primary/30 bg-primary-soft/40' : 'border-line',
 			className,
 		)}>

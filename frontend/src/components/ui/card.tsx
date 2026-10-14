@@ -3,7 +3,7 @@ import type { HTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-	return <section className={cn('rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(16_24_40/0.04)]', className)} {...props} />
+	return <section className={cn('rounded-2xl border border-line bg-surface', className)} {...props} />
 }
 
 export function CardHeader({ title, description, actions, className }: { title: ReactNode; description?: ReactNode; actions?: ReactNode; className?: string }) {

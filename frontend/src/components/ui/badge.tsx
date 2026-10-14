@@ -18,9 +18,9 @@ const DOTS: Record<Tone, string> = {
 	danger: 'bg-rose-500', info: 'bg-sky-500', review: 'bg-orange-500',
 }
 
-export function Badge({ tone = 'neutral', children, dot = true, className }: { tone?: Tone; children: ReactNode; dot?: boolean; className?: string }) {
+export function Badge({ tone = 'neutral', children, dot = false, className }: { tone?: Tone; children: ReactNode; dot?: boolean; className?: string }) {
 	return (
-		<span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset', TONES[tone], className)}>
+		<span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold', TONES[tone], className)}>
 			{dot && <span aria-hidden className={cn('size-1.5 rounded-full', DOTS[tone])} />}
 			{children}
 		</span>

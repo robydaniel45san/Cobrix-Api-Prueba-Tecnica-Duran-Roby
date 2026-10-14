@@ -99,7 +99,7 @@ export function ExpedientePage() {
 
 			{/* How much, since when, and how to reach them. */}
 			<div className="grid gap-4 lg:grid-cols-3">
-				<div className="rounded-xl bg-indigo-950 p-5 text-white lg:col-span-1">
+				<div className="rounded-2xl bg-[#1e1b4b] p-5 text-white lg:col-span-1">
 					<p className="text-sm text-indigo-200">Debe</p>
 					<p className="tabular mt-1 text-4xl font-semibold tracking-tight">{money(debt)}</p>
 					<p className="mt-1 text-sm text-indigo-200">
@@ -122,8 +122,8 @@ export function ExpedientePage() {
 				</Card>
 			</div>
 
-			<div className="mt-10 grid gap-x-6 gap-y-10 lg:grid-cols-3">
-				<div className="space-y-10 lg:col-span-2">
+			<div className="mt-8 grid gap-x-6 gap-y-8 lg:grid-cols-3">
+				<div className="space-y-8 lg:col-span-2">
 					<Section title="Por cobrar" description="De la más antigua a la más reciente. Toca una factura para ver su detalle." className="mt-0">
 						<Card>
 							{open.length === 0
@@ -151,7 +151,7 @@ export function ExpedientePage() {
 					)}
 				</div>
 
-				<div className="space-y-10">
+				<div className="space-y-8">
 					<Section title="Contratos en el ISP" className="mt-0">
 						<Card>
 							<ul className="divide-y divide-line/70">
@@ -163,7 +163,7 @@ export function ExpedientePage() {
 												<p className="font-medium">{contract.plan}</p>
 												<Badge tone={status.tone}>{status.label}</Badge>
 											</div>
-											<p className="tabular text-muted">{money(contract.planPriceCents, contract.currency)} al mes · sucursal {contract.branch}</p>
+											<p className="text-muted"><span className="tabular">{money(contract.planPriceCents, contract.currency)}</span> al mes · sucursal {contract.branch}</p>
 											<p className="text-xs text-muted">Contrato {contract.id}{contract.address && ` · ${contract.address}`}</p>
 										</li>
 									)

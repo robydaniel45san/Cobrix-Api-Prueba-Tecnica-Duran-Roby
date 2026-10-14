@@ -24,20 +24,20 @@ const AGING_COLORS: Record<string, string> = { '0-30': 'bg-sky-500', '31-60': 'b
 
 function Money({ summary }: { summary: Summary }) {
 	return (
-		<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-			<div className="rounded-xl bg-indigo-950 p-5 text-white sm:col-span-2">
+		<div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+			<div className="col-span-2 rounded-2xl bg-[#1e1b4b] p-5 text-white">
 				<p className="text-sm text-indigo-200">Por cobrar</p>
 				<p className="tabular mt-1 text-4xl font-semibold tracking-tight">{money(summary.openAmountCents)}</p>
 				<p className="mt-1 text-sm text-indigo-200">{plural(summary.openInvoices, 'factura abierta', 'facturas abiertas')} de {plural(summary.customers, 'cliente', 'clientes')}</p>
 			</div>
-			<Card className="p-5">
-				<p className="text-sm text-muted">Vencido hace más de 30 días</p>
-				<p className="tabular mt-1 text-2xl font-semibold text-amber-700">{money(summary.overdue30.amountCents)}</p>
+			<Card className="p-4 sm:p-5">
+				<p className="text-xs text-muted sm:text-sm">Vencido +30 días</p>
+				<p className="tabular mt-1 text-lg font-semibold text-amber-700 sm:text-2xl">{money(summary.overdue30.amountCents)}</p>
 				<p className="mt-1 text-xs text-muted">{plural(summary.overdue30.invoices, 'factura', 'facturas')} · {plural(summary.overdue30.customers, 'cliente', 'clientes')}</p>
 			</Card>
-			<Card className="p-5">
-				<p className="text-sm text-muted">Cobrado por el ISP</p>
-				<p className="tabular mt-1 text-2xl font-semibold text-emerald-700">{money(summary.paidAmountCents)}</p>
+			<Card className="p-4 sm:p-5">
+				<p className="text-xs text-muted sm:text-sm">Cobrado por el ISP</p>
+				<p className="tabular mt-1 text-lg font-semibold text-emerald-700 sm:text-2xl">{money(summary.paidAmountCents)}</p>
 				<p className="mt-1 text-xs text-muted">{plural(summary.paidInvoices, 'factura pagada', 'facturas pagadas')} en caja</p>
 			</Card>
 		</div>
@@ -50,7 +50,7 @@ function Totals({ summary }: { summary: Summary }) {
 		['Facturas abiertas', summary.openInvoices], ['Facturas pagadas', summary.paidInvoices],
 	] as const
 	return (
-		<dl className="grid grid-cols-2 divide-line rounded-xl border border-line bg-surface sm:grid-cols-4 sm:divide-x">
+		<dl className="grid grid-cols-2 divide-line rounded-2xl border border-line bg-surface sm:grid-cols-4 sm:divide-x">
 			{items.map(([label, value]) => (
 				<div key={label} className="px-5 py-3">
 					<dt className="text-xs text-muted">{label}</dt>
@@ -93,7 +93,7 @@ function Priority({ customers, today }: { customers: CustomerRow[]; today: strin
 
 function Notice({ tone = 'neutral', title, children, action }: { tone?: 'warning' | 'danger' | 'neutral'; title: string; children: ReactNode; action?: ReactNode }) {
 	return (
-		<div className={cn('rounded-xl border p-4 text-sm',
+		<div className={cn('rounded-2xl border px-5 py-4 text-sm',
 			tone === 'warning' && 'border-amber-200 bg-amber-50 text-amber-950',
 			tone === 'danger' && 'border-rose-200 bg-rose-50 text-rose-950',
 			tone === 'neutral' && 'border-line bg-surface')}>
@@ -161,7 +161,7 @@ function Aging({ summary }: { summary: Summary }) {
 					<li key={slot.bucket}>
 						<div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
 							<span className="font-medium">{slot.label}</span>
-							<span className="tabular text-muted"><span className="font-semibold text-text">{money(slot.amountCents)}</span> · {plural(slot.invoices, 'factura', 'facturas')}</span>
+							<span className="text-muted"><span className="tabular text-text">{money(slot.amountCents)}</span> · {plural(slot.invoices, 'factura', 'facturas')}</span>
 						</div>
 						<div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-canvas">
 							<div className={cn('h-full rounded-full', AGING_COLORS[slot.bucket])} style={{ width: `${slot.amountCents === 0 ? 0 : Math.max((slot.amountCents / max) * 100, 2)}%` }} />
@@ -236,9 +236,9 @@ export function InicioPage() {
 			)}
 			<LiveRun className="mb-8" />
 
-			<Section title="Por cobrar"><Money summary={summary} /></Section>
+			<section aria-label="Por cobrar"><Money summary={summary} /></section>
 
-			<div className="mt-10 grid gap-x-6 gap-y-10 lg:grid-cols-3">
+			<div className="mt-8 grid gap-x-6 gap-y-8 lg:grid-cols-3">
 				<Section title="A quién cobrar primero" description="Ordenados por la deuda vencida más antigua." className="mt-0 lg:col-span-2"
 					actions={<Link to="/clientes" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">Ver todos <ArrowRight className="size-3.5" /></Link>}>
 					<Card><Priority customers={data.customers} today={summary.today} /></Card>
@@ -246,7 +246,7 @@ export function InicioPage() {
 				<Section title="Necesita atención" className="mt-0"><Attention summary={summary} /></Section>
 			</div>
 
-			<div className="mt-10 grid gap-x-6 gap-y-10 lg:grid-cols-3">
+			<div className="mt-8 grid gap-x-6 gap-y-8 lg:grid-cols-3">
 				<Section title="Antigüedad de la deuda" description="Saldo abierto según los días desde el vencimiento." className="mt-0 lg:col-span-2"><Aging summary={summary} /></Section>
 				{summary.provider.configured && <Section title="Sistema del ISP" className="mt-0"><IspCard summary={summary} /></Section>}
 			</div>

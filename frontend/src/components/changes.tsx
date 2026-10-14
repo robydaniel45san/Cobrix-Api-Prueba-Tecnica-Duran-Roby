@@ -25,7 +25,7 @@ function Tile({ label, value, hint, tone }: { label: string; value: ReactNode; h
 		neutral: 'border-line bg-surface text-text',
 	}
 	return (
-		<div className={cn('rounded-xl border px-4 py-3.5', tones[tone])}>
+		<div className={cn('rounded-2xl border px-5 py-4', tones[tone])}>
 			<p className="text-sm opacity-80">{label}</p>
 			<p className="tabular mt-1 text-2xl font-semibold">{value}</p>
 			<p className="mt-0.5 text-xs opacity-80">{hint}</p>
