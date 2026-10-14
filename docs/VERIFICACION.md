@@ -102,8 +102,8 @@ Verificados de dos maneras: con la prueba automática `ciclo.test.ts` y ejecutan
 | Implementación en un repositorio de GitHub | Completo |
 | Pruebas automáticas de las reglas de §4 | Completo (`reglas.test.ts`) |
 | Pruebas de al menos un ciclo completo (importar → pagar → actualizar) | Completo (`ciclo.test.ts`) |
-| README con cómo levantarlo y correr las pruebas | **Pendiente:** el README actual es el original del esqueleto |
-| Nota breve: decisiones, fuera de alcance, con más tiempo, punto diferencial | **Pendiente:** el contenido existe en `DISENO.md` y `BITACORA-IA.md`; falta la nota de entrega |
+| README con cómo levantarlo y correr las pruebas | Completo ([README](../README.md)) |
+| Nota breve: decisiones, fuera de alcance, con más tiempo, punto diferencial | Completo ([NOTA.md](NOTA.md)) |
 
 ## 6. Criterios de evaluación (§7)
 
