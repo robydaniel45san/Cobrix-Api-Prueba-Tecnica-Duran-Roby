@@ -22,7 +22,7 @@ export interface Summary {
 }
 
 const AGING = [
-	{ bucket: 'current', label: 'Del mes', max: 30 },
+	{ bucket: '0-30', label: '0 a 30 días', max: 30 },
 	{ bucket: '31-60', label: '31 a 60 días', max: 60 },
 	{ bucket: '61-90', label: '61 a 90 días', max: 90 },
 	{ bucket: '90+', label: 'Más de 90 días', max: Number.POSITIVE_INFINITY },

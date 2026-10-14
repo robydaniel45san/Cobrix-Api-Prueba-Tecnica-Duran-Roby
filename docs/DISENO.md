@@ -6,7 +6,7 @@ Integración de Cobrix con el administrador de facturas de un proveedor de inter
 |---|---|
 | Autor | Roby Durán |
 | Referencias | [Enunciado](ENUNCIADO.md) · [Guía de la API](API.md) · [Bitácora de desarrollo](BITACORA-IA.md) |
-| Estado | Sincronización completa y probada. Panel en desarrollo. |
+| Estado | Sincronización, API y panel completos y probados. Pendiente: README y nota de entrega. |
 
 ## Contenido
 
@@ -78,16 +78,16 @@ flowchart LR
 
 | Caso de uso | Enunciado | Lógica | Interfaz |
 |---|---|---|---|
-| CU-01 Configurar empresa | §3.1 | Completo | Pendiente |
-| CU-02 Configurar proveedor | §3.1 | Completo | Pendiente |
-| CU-03 Probar conexión | §3.1 | Completo | Pendiente |
-| CU-04 y CU-05 Simular importación e importar | §3.2 | Completo | Pendiente |
-| CU-06 y CU-07 Simular y actualizar pagadas | §3.3 | Completo | Pendiente |
-| CU-08 Consultar corridas | §3.4 | Completo | Pendiente |
-| CU-09 Buscar clientes | §3.5 | Completo | Pendiente |
-| CU-10 Consultar expediente | §3.6 | Completo | Pendiente |
-| CU-11 Consultar resumen | §3.8 | Completo | Pendiente |
-| CU-12 Corrida automática | §3.1 | Pendiente | Pendiente |
+| CU-01 Configurar empresa | §3.1 | Completo | Completo |
+| CU-02 Configurar proveedor | §3.1 | Completo | Completo |
+| CU-03 Probar conexión | §3.1 | Completo | Completo |
+| CU-04 y CU-05 Simular importación e importar | §3.2 | Completo | Completo |
+| CU-06 y CU-07 Simular y actualizar pagadas | §3.3 | Completo | Completo |
+| CU-08 Consultar corridas | §3.4 | Completo | Completo |
+| CU-09 Buscar clientes | §3.5 | Completo | Completo |
+| CU-10 Consultar expediente | §3.6 | Completo | Completo |
+| CU-11 Consultar resumen | §3.8 | Completo | Completo |
+| CU-12 Corrida automática | §3.1 | Completo | Completo |
 
 ### CU-02 Configurar proveedor
 
@@ -707,7 +707,4 @@ Una corrida completada con avisos se almacena como `completed` con `warnings` ma
 
 ## 12. Trabajo pendiente
 
-- API HTTP del panel y progreso de corridas en tiempo real.
-- Interfaz: resumen, configuración, sincronización y detalle de corrida, clientes y expediente.
-- Corrida automática diaria.
 - README con instrucciones de instalación y nota final de entrega.

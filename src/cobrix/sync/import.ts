@@ -213,15 +213,20 @@ export async function runImport(deps: SyncDeps, options: RunOptions): Promise<Ru
 						contract.currency, contract.branch, contract.address],
 				)
 			}
+			// Consecutive numbers without gaps: a sequence would skip values after an abrupt stop, and
+			// only one run writes at a time (run_one_in_progress), so «last + 1» is safe here.
+			const [last] = await tx.query<{ n: number }>(`SELECT COALESCE(max(substring(number FROM 5)::int), 0)::int AS n FROM invoice`)
+			let nextNumber = (last?.n ?? 0) + 1
 			for (const { contract, customerId, installment } of newInvoices) {
 				const [inserted] = await tx.query<{ id: number; number: string }>(
 					`INSERT INTO invoice (number, external_id, customer_id, contract_id, label, period, due_date, cutoff_date, total, balance, currency, imported_run_id)
-					 VALUES ('FAC-' || lpad(nextval('invoice_number_seq')::text, 6, '0'), $1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $10)
+					 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10, $11)
 					 ON CONFLICT (external_id) DO NOTHING RETURNING id, number`,
-					[installment.externalId, customerId, contract.id, installment.label, installment.period, installment.dueDate,
-						cutoffDate(installment.dueDate, provider.graceDays), installment.amountCents / 100, contract.currency, runId],
+					[`FAC-${String(nextNumber).padStart(6, '0')}`, installment.externalId, customerId, contract.id, installment.label, installment.period,
+						installment.dueDate, cutoffDate(installment.dueDate, provider.graceDays), installment.amountCents / 100, contract.currency, runId],
 				)
 				if (!inserted) continue
+				nextNumber++
 				count('installmentsImported')
 				count('amountImportedCents', installment.amountCents)
 				await event(tx, customerId, inserted.id, 'invoice_imported', runId, `Cuota ${installment.externalId} · ${installment.label}`)

@@ -61,7 +61,11 @@ export class RunInProgressError extends Error {
 
 export async function startRun(db: Queryable, kind: RunKind, dryRun: boolean, trigger: 'manual' | 'auto'): Promise<number> {
 	try {
-		const [row] = await db.query<{ id: number }>('INSERT INTO run (kind, dry_run, trigger) VALUES ($1, $2, $3) RETURNING id', [kind, dryRun, trigger])
+		// Consecutive ids (see the invoice numbering in import.ts); a concurrent insert fails on the lock or the key.
+		const [row] = await db.query<{ id: number }>(
+			'INSERT INTO run (id, kind, dry_run, trigger) VALUES ((SELECT COALESCE(max(id), 0) + 1 FROM run), $1, $2, $3) RETURNING id',
+			[kind, dryRun, trigger],
+		)
 		return (row as { id: number }).id
 	} catch (error) {
 		// run_one_in_progress: the database is the lock, so it also holds across processes.

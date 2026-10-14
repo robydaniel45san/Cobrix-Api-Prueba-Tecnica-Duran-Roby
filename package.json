@@ -8,14 +8,33 @@
 		"node": ">=24"
 	},
 	"scripts": {
-		"start": "node --disable-warning=ExperimentalWarning src/main.ts",
+		"start": "npm run build && node --disable-warning=ExperimentalWarning src/main.ts",
+		"serve": "node --disable-warning=ExperimentalWarning src/main.ts",
+		"build": "vite build --config panel/vite.config.ts",
+		"dev": "vite --config panel/vite.config.ts",
 		"seed": "node --disable-warning=ExperimentalWarning src/billing-api/seed.ts",
 		"test": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 \"test/**/*.test.ts\"",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit && tsc --noEmit -p panel"
 	},
 	"devDependencies": {
+		"@radix-ui/react-alert-dialog": "1.1.23",
+		"@radix-ui/react-dialog": "1.1.23",
+		"@tailwindcss/vite": "4.3.3",
 		"@types/node": "24.3.0",
-		"typescript": "5.9.2"
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"@vitejs/plugin-react": "6.1.1",
+		"class-variance-authority": "0.7.1",
+		"clsx": "2.1.1",
+		"lucide-react": "1.48.0",
+		"react": "19.3.0",
+		"react-dom": "19.3.0",
+		"react-router-dom": "7.18.4",
+		"sonner": "2.0.8",
+		"tailwind-merge": "3.7.0",
+		"tailwindcss": "4.3.3",
+		"typescript": "5.9.2",
+		"vite": "8.3.1"
 	},
 	"dependencies": {
 		"@electric-sql/pglite": "0.5.8"

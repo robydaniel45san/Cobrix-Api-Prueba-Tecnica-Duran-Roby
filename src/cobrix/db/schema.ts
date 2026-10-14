@@ -81,8 +81,6 @@ CREATE TABLE IF NOT EXISTS contract (
 	updated_at  timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE SEQUENCE IF NOT EXISTS invoice_number_seq;
-
 CREATE TABLE IF NOT EXISTS invoice (
 	id            serial PRIMARY KEY,
 	number        text NOT NULL UNIQUE,

@@ -32,6 +32,8 @@ function wrap(target: PGlite | Transaction): Queryable {
 export async function openDatabase(dataDir?: string): Promise<Database> {
 	if (dataDir) mkdirSync(dataDir, { recursive: true })
 	const pg = await PGlite.create(dataDir ? { dataDir } : {})
+	// Timestamps leave the database in UTC, whatever the host's time zone.
+	await pg.exec("SET TIME ZONE 'UTC'")
 	await pg.exec(SCHEMA)
 	// A process that died mid-run leaves it «running» forever: close it as failed.
 	await pg.query(`UPDATE run SET status = 'failed', finished_at = now(), error = 'La corrida se interrumpió (el servicio se detuvo antes de terminar).' WHERE status = 'running'`)

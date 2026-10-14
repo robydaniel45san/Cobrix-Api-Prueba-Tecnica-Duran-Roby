@@ -56,6 +56,11 @@ describe('ciclo completo con la API del administrador', () => {
 		assert.equal(customers?.n, 20)
 	})
 
+	it('las facturas se numeran FAC-000001 a FAC-000042, sin huecos, por contrato y periodo', async () => {
+		const rows = await query(`SELECT number FROM invoice ORDER BY contract_id, period`)
+		assert.deepEqual(rows.map(row => row.number), Array.from({ length: 42 }, (_, i) => `FAC-${String(i + 1).padStart(6, '0')}`))
+	})
+
 	it('cada cuota queda en el detalle de la corrida con su resultado', async () => {
 		const [run] = await query(`SELECT id FROM run WHERE kind = 'import' AND NOT dry_run ORDER BY id DESC LIMIT 1`)
 		const rows = await query(`SELECT result, count(*)::int AS n FROM run_item WHERE run_id = $1 GROUP BY result ORDER BY result`, [run?.id])
