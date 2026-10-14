@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /*
- * Design tokens, from the approved mockup: IBM Plex Sans for text and IBM Plex Mono for amounts,
+ * Design tokens: IBM Plex Sans for text and IBM Plex Mono for amounts,
  * ink navigation, white cards on a cool grey ground, one indigo accent for actions, deep indigo
  * for the amount that matters, and a status palette used only for states.
  */

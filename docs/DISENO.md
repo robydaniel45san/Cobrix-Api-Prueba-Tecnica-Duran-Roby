@@ -89,7 +89,7 @@ flowchart LR
 | CU-11 Consultar resumen | §3.8 | `GET /api/summary` | Inicio |
 | CU-12 Corrida automática | §3.1 | Programador interno | Configuración, estado en Inicio |
 
-**Diseño de la interfaz.** Diseñé el panel a partir de un [mockup](https://claude.ai/artifact/R3FpkM9C6GdhErLoQeNGEZ) centrado en las tareas del operador, no en los endpoints: mantener los datos al día, cobrar y resolver lo pendiente. La simulación del enunciado es el primer paso de cada sincronización («Revisa los cambios antes de aplicarlos»), y los resultados se explican en lenguaje de negocio; los contadores con su nombre interno quedan en un «Detalle técnico» plegado. Un asistente guía la primera conexión.
+**Diseño de la interfaz.** Diseñé el panel primero como mockup, centrado en las tareas del operador y no en los endpoints, y luego lo implementé (ver las [capturas del README](../README.md#capturas)). Las tareas son tres: mantener los datos al día, cobrar y resolver lo pendiente. La simulación del enunciado es el primer paso de cada sincronización («Revisa los cambios antes de aplicarlos»), y los resultados se explican en lenguaje de negocio; los contadores con su nombre interno quedan en un «Detalle técnico» plegado. Un asistente guía la primera conexión.
 
 ### CU-02 Configurar proveedor
 
