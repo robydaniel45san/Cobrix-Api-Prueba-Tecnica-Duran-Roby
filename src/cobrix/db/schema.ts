@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS company (
 
 CREATE TABLE IF NOT EXISTS provider (
 	id                     int PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+	-- The company whose customers this invoice manager holds.
+	company_id             int NOT NULL DEFAULT 1 REFERENCES company (id),
 	name                   text NOT NULL DEFAULT 'Administrador de facturas',
 	base_url               text NOT NULL DEFAULT '',
 	username               text NOT NULL DEFAULT '',
@@ -37,6 +39,8 @@ CREATE TABLE IF NOT EXISTS provider (
 
 CREATE TABLE IF NOT EXISTS run (
 	id          serial PRIMARY KEY,
+	-- The invoice manager the run talked to.
+	provider_id int NOT NULL DEFAULT 1 REFERENCES provider (id),
 	kind        text NOT NULL CHECK (kind IN ('import', 'paid')),
 	dry_run     boolean NOT NULL,
 	trigger     text NOT NULL DEFAULT 'manual' CHECK (trigger IN ('manual', 'auto')),
