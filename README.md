@@ -10,6 +10,14 @@ Prueba técnica de Roby Durán para Cobrix. Integra Cobrix con la API del admini
 | [Bitácora](docs/BITACORA-IA.md) | Uso de IA y correcciones durante el desarrollo |
 | [Enunciado](docs/ENUNCIADO.md) · [Guía de la API](docs/API.md) | Documentos provistos por Cobrix |
 
+## Sobre esta entrega
+
+Es un **MVP**: cubre todo lo que pide el enunciado, con los criterios de aceptación verificados por pruebas automáticas, y prioriza lo que más importa en una integración de cobranza: clasificar bien cada respuesta del ISP, no duplicar ni adivinar nada, y que el operador entienda qué cambió y por qué.
+
+Lo construí con un proceso de trabajo profesional: análisis del enunciado y de la API antes de programar, reglas de negocio aisladas y probadas, pruebas de falla, integración continua, diseño de la interfaz a partir de las tareas del operador y documentación de cada decisión. Aun así, en un plazo de cuatro días pude haber pasado algo por alto; lo que dejé fuera a conciencia y lo que haría con más tiempo está en la [nota de entrega](docs/NOTA.md).
+
+Recibiré con gusto cualquier crítica constructiva: me sirve para mejorar.
+
 ## Cómo levantarlo
 
 Requiere **Node 24**. No necesita base de datos externa: Cobrix usa PostgreSQL embebido (PGlite), que se instala con las dependencias.
@@ -38,7 +46,7 @@ La fecha de la prueba queda fija en 2026-10-13, como pide el enunciado.
 
 En **Sincronización** están también las dos acciones del enunciado por separado («Traer facturas nuevas» y «Revisar cobros del ISP»), cada una con su vista previa (simulación) antes de aplicar, y el historial con el detalle por cuota.
 
-Para volver al estado inicial, detén el servidor, borra `data/cobrix/` (datos de Cobrix) y restablece el sandbox con `POST /__sim/reiniciar` desde el Swagger.
+Para volver al estado inicial: detén el servidor, borra la carpeta `data/cobrix/` (los datos de Cobrix), vuelve a ejecutar `npm start` y restablece el sandbox con `POST /__sim/reiniciar` desde el Swagger.
 
 ## Capturas
 

@@ -42,3 +42,7 @@ La integración completa del enunciado: importación y actualización de pagadas
 ## Uso de IA
 
 Trabajé con Claude Code como asistente en todas las etapas: análisis del enunciado, exploración de la API, código, pruebas y documentación. Las decisiones, el criterio y la revisión fueron míos; la estructura y la documentación las desarrollamos en conjunto. Corregí catorce puntos durante el desarrollo: cuatro los detectaron las pruebas que diseñé para romper el sistema y el resto, la revisión del código y del panel en el navegador. El caso más ilustrativo: la primera versión del lector del libro descartaba el libro entero de un contrato ante una cuota exonerada con descuento negativo. El detalle está en la [bitácora](BITACORA-IA.md).
+
+## Para terminar
+
+Entrego un MVP completo para el alcance del enunciado, hecho con el mismo cuidado que pondría en un proyecto real. Sé que siempre hay algo que mejorar, y agradeceré cualquier observación o crítica constructiva sobre el código, el diseño o las decisiones: es la mejor forma de seguir creciendo.
