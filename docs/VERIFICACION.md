@@ -70,7 +70,7 @@ Verificados de dos maneras: con la prueba automática `ciclo.test.ts` y ejecutan
 | Vacíos que expliquen qué hacer | Estados vacíos con acción en cada pantalla | Revisado en el navegador |
 | Confirmación antes de acciones destructivas | Diálogo antes de Importar y Actualizar pagadas | Revisado en el navegador |
 | Errores que digan qué pasó y cómo seguir | Mensajes con la acción sugerida; formato único de error | `servidor`: formato de errores |
-| Pantallas angostas | Tarjetas en lugar de tablas en teléfono | Revisado a 375 px, sin desplazamiento horizontal |
+| Pantallas angostas | Menú agrupado y plegable: cajón en teléfono, barra de íconos en tablet, barra lateral plegable en escritorio. Tarjetas en lugar de tablas por debajo de 1024 px | Revisado a 375, 768, 1024 y 1440 px; 0 px de desplazamiento horizontal en todas las pantallas |
 | **3.8 Resumen:** totales, proveedor, corrida automática, últimas corridas, accesos rápidos | `GET /api/summary` · pantalla Resumen | `servidor`: totales y antigüedad de la deuda |
 
 ## 4. Reglas de negocio (§4)

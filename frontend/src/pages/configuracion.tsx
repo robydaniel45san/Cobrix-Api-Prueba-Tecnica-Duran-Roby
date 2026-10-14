@@ -1,10 +1,16 @@
-import { CheckCircle2, CircleAlert, Loader2, PlugZap, Wand2 } from 'lucide-react'
+/**
+ * Configuración (ENUNCIADO §3.1), organized by category. Each category shows its title and
+ * explanation on the left and its fields on the right; on narrow screens they stack.
+ *   Empresa · Conexión · Qué se importa · Topes y libro de pagos · Corrida automática
+ */
+
+import { Building2, CalendarClock, CheckCircle2, CircleAlert, Filter, Gauge, Loader2, PlugZap, Server, Wand2, type LucideIcon } from 'lucide-react'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
 import { PageHeader } from '@/components/layout'
 import { Button } from '@/components/ui/button'
-import { Card, CardBody, CardHeader } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { ErrorNotice, Skeleton } from '@/components/ui/feedback'
 import { CheckboxPill, Field, Input, Select } from '@/components/ui/form'
 import { api, ApiError, type Company, type Settings } from '@/lib/api'
@@ -47,18 +53,27 @@ function toForm(settings: Settings): ProviderForm {
 	}
 }
 
-function Group({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+/** One settings category: title and explanation beside (or above) its card of fields. */
+function Category({ icon: Icon, title, description, children, footer }: { icon: LucideIcon; title: string; description: string; children: ReactNode; footer?: ReactNode }) {
 	return (
-		<fieldset className="border-t border-line pt-5 first:border-t-0 first:pt-0">
+		<fieldset className="grid min-w-0 gap-4 lg:grid-cols-[260px_1fr] lg:gap-8">
 			<legend className="sr-only">{title}</legend>
-			<p className="text-sm font-semibold">{title}</p>
-			{description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
-			<div className="mt-4">{children}</div>
+			<div className="flex items-start gap-3">
+				<span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary"><Icon className="size-[18px]" /></span>
+				<div>
+					<h2 className="font-semibold">{title}</h2>
+					<p className="mt-1 text-sm text-muted">{description}</p>
+				</div>
+			</div>
+			<Card className="min-w-0">
+				<div className="space-y-5 p-5">{children}</div>
+				{footer && <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3">{footer}</div>}
+			</Card>
 		</fieldset>
 	)
 }
 
-function CompanyCard({ settings, onSaved }: { settings: Settings; onSaved: (settings: Settings) => void }) {
+function CompanySettings({ settings, onSaved }: { settings: Settings; onSaved: (settings: Settings) => void }) {
 	const [form, setForm] = useState<Company>(settings.company)
 	const [errors, setErrors] = useState<Record<string, string>>({})
 	const [saving, setSaving] = useState(false)
@@ -81,24 +96,24 @@ function CompanyCard({ settings, onSaved }: { settings: Settings; onSaved: (sett
 	}
 
 	return (
-		<Card>
-			<CardHeader title="Empresa" description="Aparece en el panel y en las comunicaciones de cobranza." />
-			<form onSubmit={submit} noValidate>
-				<CardBody className="grid gap-4 md:grid-cols-3">
-					<Field label="Nombre" error={errors.name}>{props => <Input {...props} value={form.name} onChange={set('name')} placeholder="Mi ISP, C.A." />}</Field>
+		<form onSubmit={submit} noValidate>
+			<Category
+				icon={Building2}
+				title="Empresa"
+				description="Aparece en el panel y en las comunicaciones de cobranza. Zona horaria America/Caracas, moneda USD."
+				footer={<><span className="text-xs text-muted">Se guarda por separado del proveedor.</span><Button type="submit" disabled={saving}>{saving && <Loader2 className="animate-spin" />}Guardar empresa</Button></>}
+			>
+				<div className="grid gap-4 sm:grid-cols-2">
+					<Field label="Nombre" error={errors.name} className="sm:col-span-2">{props => <Input {...props} value={form.name} onChange={set('name')} placeholder="Mi ISP, C.A." />}</Field>
 					<Field label="RIF" error={errors.rif} hint="Ejemplo: J-12345678-9">{props => <Input {...props} value={form.rif} onChange={set('rif')} placeholder="J-12345678-9" />}</Field>
 					<Field label="Correo de cobranza" error={errors.collectionsEmail}>{props => <Input {...props} type="email" value={form.collectionsEmail} onChange={set('collectionsEmail')} placeholder="cobranza@miisp.com" />}</Field>
-				</CardBody>
-				<div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3">
-					<p className="text-xs text-muted">Zona horaria America/Caracas · moneda USD</p>
-					<Button type="submit" disabled={saving}>{saving && <Loader2 className="animate-spin" />}Guardar empresa</Button>
 				</div>
-			</form>
-		</Card>
+			</Category>
+		</form>
 	)
 }
 
-function ProviderCard({ settings, onSaved }: { settings: Settings; onSaved: (settings: Settings) => void }) {
+function ProviderSettings({ settings, onSaved }: { settings: Settings; onSaved: (settings: Settings) => void }) {
 	const [form, setForm] = useState<ProviderForm>(() => toForm(settings))
 	const [errors, setErrors] = useState<Record<string, string>>({})
 	const [saving, setSaving] = useState(false)
@@ -164,99 +179,92 @@ function ProviderCard({ settings, onSaved }: { settings: Settings; onSaved: (set
 	}
 
 	return (
-		<Card className="mt-6">
-			<CardHeader
-				title="Administrador de facturas"
-				description="Conexión con la API del ISP y reglas de importación."
-				actions={
-					<>
-						{sandbox && <Button variant="ghost" size="sm" onClick={() => void connectSandbox()} disabled={testing} aria-describedby="sandbox-url"><Wand2 /> Conectar al sandbox local<span id="sandbox-url" className="sr-only">{sandbox.baseUrl}</span></Button>}
-						<Button variant="secondary" size="sm" onClick={() => void runTest()} disabled={testing}>
-							{testing ? <Loader2 className="animate-spin" /> : <PlugZap />} Probar conexión
-						</Button>
-					</>
-				}
-			/>
-			<form onSubmit={submit} noValidate>
-				<CardBody className="space-y-6">
-					{test && (
-						<div role="status" className={cn('flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm', test.ok ? 'bg-emerald-50 text-emerald-900' : 'bg-rose-50 text-rose-900')}>
-							{test.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" /> : <CircleAlert className="mt-0.5 size-4 shrink-0 text-rose-600" />}
-							<span>{test.message}{test.ok && !settings.provider.hasPassword && ' Guarda el proveedor para usar estas credenciales en las corridas.'}</span>
-						</div>
-					)}
-
-					<Group title="Conexión">
-						<div className="grid gap-4 md:grid-cols-2">
-							<Field label="Nombre visible" error={errors.name}>{props => <Input {...props} value={form.name} onChange={text('name')} />}</Field>
-							<Field label="URL de la API" error={errors.baseUrl} hint="Con o sin /api/v1. Ejemplo: https://facturas.miisp.com">{props => <Input {...props} value={form.baseUrl} onChange={text('baseUrl')} placeholder="https://" inputMode="url" />}</Field>
-							<Field label="Usuario o correo" error={errors.username}>{props => <Input {...props} value={form.username} onChange={text('username')} autoComplete="off" />}</Field>
-							<Field label="Contraseña" error={errors.password} hint={settings.provider.hasPassword ? 'Hay una contraseña guardada. Déjala vacía para conservarla.' : 'Se guarda cifrada y nunca se vuelve a mostrar.'}>
-								{props => <Input {...props} type="password" value={form.password} onChange={text('password')} autoComplete="new-password" placeholder={settings.provider.hasPassword ? '••••••••' : ''} />}
-							</Field>
-						</div>
-					</Group>
-
-					<Group title="Qué se importa" description="Solo cuotas pendientes, en USD coherente, de titulares con cédula o RIF válidos.">
-						<div className="space-y-5">
-							<div>
-								<p className="mb-2 text-sm font-medium">Estados de contrato que se importan</p>
-								<div className="flex flex-wrap gap-2">
-									{STATUSES.map(status => <CheckboxPill key={status} checked={form.importableStatuses.includes(status)} onChange={toggle('importableStatuses', status)}>{status}</CheckboxPill>)}
-								</div>
-								{errors.importableStatuses && <p className="mt-1.5 text-xs font-medium text-rose-600">{errors.importableStatuses}</p>}
-							</div>
-							<div className="grid gap-4 md:grid-cols-3">
-								<Field label="Ventana de importación" error={errors.windowMonths} hint="Solo cuotas desde el mes actual menos N meses.">
-									{props => (
-										<Select {...props} value={form.windowMonths} onChange={text('windowMonths')}>
-											<option value="">Sin ventana</option>
-											{[3, 6, 9, 12].map(months => <option key={months} value={months}>{months} meses</option>)}
-										</Select>
-									)}
-								</Field>
-								<Field label="Máximo de cuotas recientes por contrato" error={errors.maxRecentPerContract} hint="De 1 a 60. Vacío: todas. Se conservan las más recientes.">
-									{props => <Input {...props} type="number" min={1} max={60} value={form.maxRecentPerContract} onChange={text('maxRecentPerContract')} placeholder="Todas" />}
-								</Field>
-								<Field label="Días de gracia para el corte" error={errors.graceDays} hint="Corte = vencimiento + días (0 a 60).">
-									{props => <Input {...props} type="number" min={0} max={60} value={form.graceDays} onChange={text('graceDays')} />}
-								</Field>
-							</div>
-							<div>
-								<p className="mb-2 text-sm font-medium">Excluir por tipo de documento del titular</p>
-								<div className="flex flex-wrap gap-2">
-									{DOCUMENT_TYPES.map(type => <CheckboxPill key={type.value} checked={form.excludedDocumentTypes.includes(type.value)} onChange={toggle('excludedDocumentTypes', type.value)}>{type.label}</CheckboxPill>)}
-								</div>
-								<p className="mt-1.5 text-xs text-muted">Un documento sin letra (por ejemplo 09000123) no se excluye: no se adivina su tipo.</p>
-							</div>
-						</div>
-					</Group>
-
-					<Group title="Topes por corrida" description="Lo que exceda queda frenado y se importa en la siguiente corrida. Vacío: sin tope.">
-						<div className="grid gap-4 md:grid-cols-3">
-							<Field label="Facturas nuevas" error={errors.maxNewInvoices}>{props => <Input {...props} type="number" min={1} value={form.maxNewInvoices} onChange={text('maxNewInvoices')} placeholder="Sin tope" />}</Field>
-							<Field label="Monto nuevo (USD)" error={errors.maxNewAmount}>{props => <Input {...props} type="number" min={0.01} step="0.01" value={form.maxNewAmount} onChange={text('maxNewAmount')} placeholder="Sin tope" />}</Field>
-							<Field label="Meses del libro en «Actualizar pagadas»" error={errors.ledgerMonths} hint="De 1 a 12; por defecto 7.">
-								{props => <Input {...props} type="number" min={0} max={12} value={form.ledgerMonths} onChange={text('ledgerMonths')} />}
-							</Field>
-						</div>
-					</Group>
-
-					<Group title="Corrida automática" description="Una vez al día: importar y después actualizar pagadas. Hora de Caracas.">
-						<div className="flex flex-wrap items-end gap-4">
-							<CheckboxPill checked={form.autoEnabled} onChange={checked => set('autoEnabled', checked)}>Activar la corrida diaria</CheckboxPill>
-							<Field label="Hora" error={errors.autoTime} className="w-40">
-								{props => <Input {...props} type="time" value={form.autoTime} onChange={text('autoTime')} disabled={!form.autoEnabled} />}
-							</Field>
-						</div>
-					</Group>
-				</CardBody>
-				<div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3">
-					<p className="text-xs text-muted">Última modificación: {dateTime(settings.provider.updatedAt)}</p>
-					<Button type="submit" disabled={saving}>{saving && <Loader2 className="animate-spin" />}Guardar proveedor</Button>
+		<form onSubmit={submit} noValidate className="space-y-8">
+			<Category icon={Server} title="Conexión" description="API del administrador de facturas del ISP. La contraseña se guarda cifrada y nunca se vuelve a mostrar.">
+				<div className="grid gap-4 sm:grid-cols-2">
+					<Field label="Nombre visible" error={errors.name}>{props => <Input {...props} value={form.name} onChange={text('name')} />}</Field>
+					<Field label="URL de la API" error={errors.baseUrl} hint="Con o sin /api/v1.">{props => <Input {...props} value={form.baseUrl} onChange={text('baseUrl')} placeholder="https://facturas.miisp.com" inputMode="url" />}</Field>
+					<Field label="Usuario o correo" error={errors.username}>{props => <Input {...props} value={form.username} onChange={text('username')} autoComplete="off" />}</Field>
+					<Field label="Contraseña" error={errors.password} hint={settings.provider.hasPassword ? 'Hay una contraseña guardada. Déjala vacía para conservarla.' : undefined}>
+						{props => <Input {...props} type="password" value={form.password} onChange={text('password')} autoComplete="new-password" placeholder={settings.provider.hasPassword ? '••••••••' : ''} />}
+					</Field>
 				</div>
-			</form>
-		</Card>
+				<div className="flex flex-col gap-2 border-t border-line pt-4 sm:flex-row sm:flex-wrap">
+					<Button variant="secondary" onClick={() => void runTest()} disabled={testing}>
+						{testing ? <Loader2 className="animate-spin" /> : <PlugZap />} Probar conexión
+					</Button>
+					{sandbox && (
+						<Button variant="ghost" onClick={() => void connectSandbox()} disabled={testing} aria-describedby="sandbox-url">
+							<Wand2 /> Conectar al sandbox local<span id="sandbox-url" className="sr-only">{sandbox.baseUrl}</span>
+						</Button>
+					)}
+				</div>
+				{test && (
+					<div role="status" className={cn('flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm', test.ok ? 'bg-emerald-50 text-emerald-900' : 'bg-rose-50 text-rose-900')}>
+						{test.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" /> : <CircleAlert className="mt-0.5 size-4 shrink-0 text-rose-600" />}
+						<span>{test.message}{test.ok && !settings.provider.hasPassword && ' Guarda el proveedor para usar estas credenciales en las corridas.'}</span>
+					</div>
+				)}
+			</Category>
+
+			<Category icon={Filter} title="Qué se importa" description="Solo cuotas pendientes, en USD coherente, de titulares con cédula o RIF válidos.">
+				<div>
+					<p className="mb-2 text-sm font-medium">Estados de contrato que se importan</p>
+					<div className="flex flex-wrap gap-2">
+						{STATUSES.map(status => <CheckboxPill key={status} checked={form.importableStatuses.includes(status)} onChange={toggle('importableStatuses', status)}>{status}</CheckboxPill>)}
+					</div>
+					{errors.importableStatuses && <p className="mt-1.5 text-xs font-medium text-rose-600">{errors.importableStatuses}</p>}
+				</div>
+				<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+					<Field label="Ventana de importación" error={errors.windowMonths} hint="Cuotas desde el mes actual menos N meses.">
+						{props => (
+							<Select {...props} value={form.windowMonths} onChange={text('windowMonths')}>
+								<option value="">Sin ventana</option>
+								{[3, 6, 9, 12].map(months => <option key={months} value={months}>{months} meses</option>)}
+							</Select>
+						)}
+					</Field>
+					<Field label="Cuotas recientes por contrato" error={errors.maxRecentPerContract} hint="De 1 a 60; vacío, todas.">
+						{props => <Input {...props} type="number" min={1} max={60} value={form.maxRecentPerContract} onChange={text('maxRecentPerContract')} placeholder="Todas" />}
+					</Field>
+					<Field label="Días de gracia para el corte" error={errors.graceDays} hint="Corte = vencimiento + días (0 a 60).">
+						{props => <Input {...props} type="number" min={0} max={60} value={form.graceDays} onChange={text('graceDays')} />}
+					</Field>
+				</div>
+				<div>
+					<p className="mb-2 text-sm font-medium">Excluir por tipo de documento del titular</p>
+					<div className="flex flex-wrap gap-2">
+						{DOCUMENT_TYPES.map(type => <CheckboxPill key={type.value} checked={form.excludedDocumentTypes.includes(type.value)} onChange={toggle('excludedDocumentTypes', type.value)}>{type.label}</CheckboxPill>)}
+					</div>
+					<p className="mt-1.5 text-xs text-muted">Un documento sin letra (por ejemplo 09000123) no se excluye: no se adivina su tipo.</p>
+				</div>
+			</Category>
+
+			<Category icon={Gauge} title="Topes y libro de pagos" description="Lo que exceda un tope queda frenado y se importa en la siguiente corrida. Vacío: sin tope.">
+				<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+					<Field label="Facturas nuevas por corrida" error={errors.maxNewInvoices}>{props => <Input {...props} type="number" min={1} value={form.maxNewInvoices} onChange={text('maxNewInvoices')} placeholder="Sin tope" />}</Field>
+					<Field label="Monto nuevo por corrida (USD)" error={errors.maxNewAmount}>{props => <Input {...props} type="number" min={0.01} step="0.01" value={form.maxNewAmount} onChange={text('maxNewAmount')} placeholder="Sin tope" />}</Field>
+					<Field label="Meses del libro de pagos" error={errors.ledgerMonths} hint="Usado por «Actualizar pagadas». De 1 a 12; por defecto 7.">
+						{props => <Input {...props} type="number" min={0} max={12} value={form.ledgerMonths} onChange={text('ledgerMonths')} />}
+					</Field>
+				</div>
+			</Category>
+
+			<Category icon={CalendarClock} title="Corrida automática" description="Una vez al día: importar y después actualizar pagadas, a la hora de Caracas.">
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+					<CheckboxPill checked={form.autoEnabled} onChange={checked => set('autoEnabled', checked)}>Activar la corrida diaria</CheckboxPill>
+					<Field label="Hora" error={errors.autoTime} className="sm:w-40">
+						{props => <Input {...props} type="time" value={form.autoTime} onChange={text('autoTime')} disabled={!form.autoEnabled} />}
+					</Field>
+				</div>
+			</Category>
+
+			{/* Always reachable: the save bar sticks to the bottom of the screen while scrolling the provider. */}
+			<div className="sticky bottom-0 z-10 -mx-4 flex flex-col gap-2 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:-mx-8 lg:px-8">
+				<p className="text-xs text-muted">Proveedor · última modificación: {dateTime(settings.provider.updatedAt)}</p>
+				<Button type="submit" disabled={saving}>{saving && <Loader2 className="animate-spin" />}Guardar proveedor</Button>
+			</div>
+		</form>
 	)
 }
 
@@ -271,10 +279,10 @@ export function ConfiguracionPage() {
 			{error && <ErrorNotice message={error.message} action={<button className="font-medium underline" onClick={reload}>Reintentar</button>} />}
 			{loading && !settings && <div className="space-y-4"><Skeleton className="h-48" /><Skeleton className="h-96" /></div>}
 			{settings && (
-				<>
-					<CompanyCard settings={settings} onSaved={setSettings} />
-					<ProviderCard settings={settings} onSaved={setSettings} />
-				</>
+				<div className="space-y-8">
+					<CompanySettings settings={settings} onSaved={setSettings} />
+					<ProviderSettings settings={settings} onSaved={setSettings} />
+				</div>
 			)}
 		</>
 	)

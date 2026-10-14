@@ -30,7 +30,8 @@ Usé la IA como asistente de programación en todas las etapas. Las decisiones d
 | 9 | Tablas con desplazamiento horizontal en pantallas angostas. | En un teléfono la deuda quedaba fuera de la vista. Clientes, detalle de corrida y facturas usan tarjetas en pantallas angostas. |
 | 10 | En la reorganización por capas, el caso de uso de pagadas guardaba la conexión con el ISP entre corridas. | Habría usado credenciales viejas tras un cambio de configuración. La conexión ahora se crea por corrida y se pasa explícitamente. |
 | 11 | El registro de configuración incluía el campo `passwordChanged`. | El enmascarador lo ocultaba por contener «password», lo que confundía al leer el log. Lo renombré `credentialsUpdated`. |
-| 12 | — | La prueba original del entorno fallaba en Windows (`new URL(...).pathname` deja `/F:/prueba%20...`). La corregí con `fileURLToPath`. Es un hallazgo del entorno entregado. |
+| 12 | El menú se ocultaba por debajo de 1024 px detrás de un desplegable sin fondo ni cierre con Esc, y no se podía plegar en escritorio; los indicadores del resumen quedaban en una grilla de 3 + 2 y la configuración era un bloque único. | Al revisar el panel en varios anchos rediseñé la navegación: menú agrupado (Cartera, Integración), cajón accesible en teléfono, barra de íconos en tablet y barra lateral plegable en escritorio. Las pantallas se organizan en secciones con título y la configuración en categorías. |
+| 13 | — | La prueba original del entorno fallaba en Windows (`new URL(...).pathname` deja `/F:/prueba%20...`). La corregí con `fileURLToPath`. Es un hallazgo del entorno entregado. |
 
 ## Verificado a mano
 

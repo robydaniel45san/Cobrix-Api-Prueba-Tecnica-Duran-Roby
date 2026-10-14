@@ -1,11 +1,11 @@
 import { Download, History, RefreshCcw } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
-import { PageHeader } from '@/components/layout'
+import { PageHeader, Section } from '@/components/layout'
 import { LiveRun, RunActions, RunStatusBadge, runSummary, useRuns } from '@/components/runs'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardHeader } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { EmptyState, ErrorNotice, Skeleton } from '@/components/ui/feedback'
 import { Table, Td, Th, Tr } from '@/components/ui/table'
 import { api, type RunKind } from '@/lib/api'
@@ -33,35 +33,28 @@ export function SincronizacionPage() {
 	return (
 		<>
 			<PageHeader title="Sincronización" description="Las dos corridas que traen los datos del administrador de facturas a Cobrix. Cada una tiene su versión «Simular», que muestra el resultado sin escribir nada." />
-			<LiveRun className="mb-6" />
+			<LiveRun className="mb-8" />
 
-			<div className="grid gap-4 md:grid-cols-2">
-				<Card className="p-5">
-					<div className="flex items-start gap-3">
-						<div className="rounded-lg bg-primary-soft p-2 text-primary"><Download className="size-5" /></div>
-						<div className="min-w-0 flex-1">
-							<h2 className="font-semibold">Importar clientes y facturas</h2>
-							<p className="mt-1 text-sm text-muted">Recorre todos los contratos y crea una factura abierta por cada cuota pendiente que cumpla las reglas, con su cliente. Nunca duplica.</p>
-							<div className="mt-4"><RunActions kind="import" /></div>
-						</div>
-					</div>
-				</Card>
-				<Card className="p-5">
-					<div className="flex items-start gap-3">
-						<div className="rounded-lg bg-emerald-50 p-2 text-emerald-700"><RefreshCcw className="size-5" /></div>
-						<div className="min-w-0 flex-1">
-							<h2 className="font-semibold">Actualizar pagadas</h2>
-							<p className="mt-1 text-sm text-muted">Revisa cada factura abierta contra el libro de cuotas y marca pagadas las que el ISP ya cobró por completo.</p>
-							<div className="mt-4"><RunActions kind="paid" /></div>
-						</div>
-					</div>
-				</Card>
-			</div>
+			<Section title="Corridas">
+				<div className="grid gap-4 lg:grid-cols-2">
+					<ActionCard
+						icon={<Download className="size-5" />} iconClass="bg-primary-soft text-primary"
+						title="Importar clientes y facturas"
+						description="Recorre todos los contratos y crea una factura abierta por cada cuota pendiente que cumpla las reglas, con su cliente. Nunca duplica."
+						kind="import"
+					/>
+					<ActionCard
+						icon={<RefreshCcw className="size-5" />} iconClass="bg-emerald-50 text-emerald-700"
+						title="Actualizar pagadas"
+						description="Revisa cada factura abierta contra el libro de cuotas y marca pagadas las que el ISP ya cobró por completo."
+						kind="paid"
+					/>
+				</div>
+			</Section>
 
-			<Card className="mt-6">
-				<CardHeader
-					title="Historial de corridas"
-					actions={
+			<Section
+				title="Historial"
+				actions={
 						<>
 							<div role="group" aria-label="Tipo de corrida" className="flex rounded-lg border border-line p-0.5">
 								{FILTERS.map(filter => (
@@ -77,7 +70,8 @@ export function SincronizacionPage() {
 							</label>
 						</>
 					}
-				/>
+			>
+			<Card>
 				{error && <div className="p-5"><ErrorNotice message={error.message} /></div>}
 				{loading && !data && <div className="space-y-2 p-5">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-10" />)}</div>}
 				{data && runs.length === 0 && (
@@ -85,7 +79,25 @@ export function SincronizacionPage() {
 						description={data.runs.length ? 'Cambia el filtro para ver las demás.' : 'Empieza con «Simular» en la importación: verás qué se importaría sin crear nada.'} />
 				)}
 				{runs.length > 0 && (
-					<Table>
+					<ul className="divide-y divide-line lg:hidden">
+						{runs.map(run => (
+							<li key={run.id}>
+								<Link to={`/sincronizacion/${run.id}`} className="block px-4 py-3 text-sm active:bg-canvas">
+									<div className="flex items-start justify-between gap-3">
+										<span className="font-medium text-primary">{KIND_LABEL[run.kind]} #{run.id}</span>
+										<RunStatusBadge run={run} />
+									</div>
+									<p className="mt-0.5 text-xs text-muted">{dateTime(run.startedAt)}{run.dryRun && ' · simulación'}{run.trigger === 'auto' && ' · automática'}</p>
+									<p className={cn('mt-1', run.status === 'failed' ? 'text-rose-700' : 'text-muted')}>
+										{run.status === 'failed' ? run.error : run.status === 'running' ? 'En curso…' : runSummary(run.kind, run.dryRun, run.counters)}
+									</p>
+								</Link>
+							</li>
+						))}
+					</ul>
+				)}
+				{runs.length > 0 && (
+					<Table wrapperClassName="hidden lg:block">
 						<thead>
 							<tr><Th>Corrida</Th><Th>Fecha</Th><Th>Estado</Th><Th className="w-full">Resultado</Th></tr>
 						</thead>
@@ -110,6 +122,23 @@ export function SincronizacionPage() {
 					</Table>
 				)}
 			</Card>
+			</Section>
 		</>
+	)
+}
+
+/** One run with its explanation; the buttons sit at the bottom so both cards line up. */
+function ActionCard({ icon, iconClass, title, description, kind }: { icon: ReactNode; iconClass: string; title: string; description: string; kind: RunKind }) {
+	return (
+		<Card className="flex h-full flex-col p-5">
+			<div className="flex flex-1 items-start gap-3">
+				<div className={cn('shrink-0 rounded-lg p-2', iconClass)}>{icon}</div>
+				<div className="min-w-0">
+					<h3 className="font-semibold">{title}</h3>
+					<p className="mt-1 text-sm text-muted">{description}</p>
+				</div>
+			</div>
+			<div className="mt-5 border-t border-line pt-4"><RunActions kind={kind} /></div>
+		</Card>
 	)
 }

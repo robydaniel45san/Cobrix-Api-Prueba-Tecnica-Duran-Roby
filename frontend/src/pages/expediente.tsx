@@ -32,7 +32,7 @@ function Invoices({ file }: { file: CustomerFile }) {
 	return (
 		<Card className="mt-6">
 			<CardHeader title="Facturas" description="Una factura por cuota del administrador. El vencimiento es el primer día del periodo; el corte suma los días de gracia." />
-			<ul className="divide-y divide-line md:hidden">
+			<ul className="divide-y divide-line lg:hidden">
 				{file.invoices.map(invoice => (
 					<li key={invoice.id} className="px-4 py-3 text-sm">
 						<div className="flex items-start justify-between gap-3">
@@ -56,7 +56,7 @@ function Invoices({ file }: { file: CustomerFile }) {
 					</li>
 				))}
 			</ul>
-			<Table wrapperClassName="hidden md:block">
+			<Table wrapperClassName="hidden lg:block">
 				<thead>
 					<tr>
 						<Th>Factura</Th><Th>Cuota · contrato</Th><Th>Periodo</Th><Th>Vence</Th><Th>Corte</Th>

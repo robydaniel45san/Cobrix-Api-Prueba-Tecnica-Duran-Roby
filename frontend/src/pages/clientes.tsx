@@ -50,7 +50,7 @@ export function ClientesPage() {
 					: <EmptyState icon={Users} title="Todavía no hay clientes" description="Los clientes aparecen al importar desde el administrador de facturas. Simula la importación para ver cuántos se crearían." action={<Link to="/sincronizacion" className={buttonVariants()}>Ir a Sincronización</Link>} />)}
 
 				{data && data.customers.length > 0 && (
-					<ul className="divide-y divide-line md:hidden">
+					<ul className="divide-y divide-line lg:hidden">
 						{data.customers.map(customer => {
 							const age = customer.oldestDueDate ? daysBetween(customer.oldestDueDate, data.today) : null
 							return (
@@ -74,7 +74,7 @@ export function ClientesPage() {
 					</ul>
 				)}
 				{data && data.customers.length > 0 && (
-					<Table wrapperClassName="hidden md:block">
+					<Table wrapperClassName="hidden lg:block">
 						<thead>
 							<tr>
 								<Th>Cliente</Th><Th>Tipo</Th><Th className="text-right">Contratos</Th><Th className="text-right">Abiertas</Th>
