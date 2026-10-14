@@ -1,30 +1,40 @@
-# Bitácora del uso de IA
+# Bitácora de desarrollo y uso de IA
 
-Registro, mientras se trabaja, de cómo se usó la IA (Claude Code) y dónde hubo que corregirla o decidir distinto. Es la base de la sección «Uso de IA» de la nota.
+Registro de cómo trabajé con asistencia de IA (Claude Code) y de las correcciones que hice durante el desarrollo. Lo llevé mientras trabajaba, no al final.
 
-## Cómo se usó
+## Cómo la usé
 
-- **Planificación:** leer el enunciado, la guía de la API y el código de la API simulada para listar las rarezas antes de escribir código. También se investigó qué es Cobrix (cobrix.co) para entender al usuario del panel, un operador de cobranza de un ISP.
-- **Exploración de datos por HTTP:** un script volcó los 27 contratos, sus cuotas pendientes y el libro de pagos. Con eso se verificaron a mano los números de §5 (54 filas pendientes − 9 por estado − 2 de moneda incoherente − 1 residual = 42 cuotas, USD 1.235) **antes** de programar las reglas.
-- **Código y pruebas:** reglas de dominio como funciones puras con su prueba; después la sincronización y una prueba de punta a punta contra la API real del sandbox.
+Usé la IA como asistente de programación en todas las etapas. Las decisiones de producto y de ingeniería, el criterio para interpretar el enunciado y la revisión de cada resultado fueron míos. La estructura del proyecto y la documentación las desarrollamos en conjunto: yo definí qué necesitaba y cómo debía organizarse, y revisé y ajusté cada propuesta antes de aceptarla.
 
-## Correcciones y decisiones propias
-
-| # | Qué propuso o hizo la IA | Qué se corrigió y por qué |
+| Etapa | Uso de la IA | Mi parte |
 |---|---|---|
-| 1 | El lector del libro rechazaba cualquier monto negativo y, ante una fila ilegible, **descartaba el libro entero del contrato**. | La prueba de punta a punta lo destapó: 900115 (VALENTINA PAZ) tiene una cuota exonerada que la API envía con `descuento: -25`, y eso dejaba sus otras dos facturas «en revisión». El descuento ahora admite signo, porque es la convención de la API, y una fila ilegible solo invalida **su** cuota. Las filas de otro contrato siguen invalidando el libro completo. |
-| 2 | Primera versión de «pagada o no»: si la cuota no estaba en el libro pero sí pendiente en el contrato, devolvía «sigue abierta» sin mirar el monto. | Se cambió para comparar también el saldo que reporta el contrato, que podría ser un abono parcial. La ausencia en ambos lados sigue siendo «sin evidencia», nunca «pagada». |
-| 3 | Al limpiar el saldo informado por el ISP, lo borraba en **todas** las facturas abiertas. | También borraba el dato de las facturas cuya consulta falló. Ahora solo se limpia en las que se revisaron de verdad. |
-| 4 | El cliente HTTP, al recibir un 401, borraba el token y cada consulta en paralelo hacía su propio login. | Lo encontró una prueba de robustez que simula un token vencido a mitad de la corrida: hubo 5 inicios de sesión en vez de 2. Ahora el login es de vuelo único (todas las consultas esperan la misma promesa) y solo se descarta el token si sigue siendo el que falló. |
-| 5 | Un contrato cuya respuesta ni siquiera tenía forma de lista quedaba excluido, pero **sin fila** en el detalle de la corrida, porque no había cuotas que listar. | Lo encontró la prueba de respuestas contradictorias. Ahora se registra una fila a nivel de contrato con el motivo, para que el operador vea por qué no entró. |
-| 6 | Las facturas se numeraban con una secuencia de Postgres. | Al revisar el panel apareció la corrida #34 justo después de la #2: las secuencias reservan 32 valores y los pierden si el proceso se detiene de golpe. En facturas eso deja huecos en la numeración. Ahora facturas y corridas se numeran «último + 1» dentro de la transacción, que es seguro porque solo corre una a la vez. Una prueba fija FAC-000001 a FAC-000042. |
-| 7 | Las fechas se formateaban suponiendo que la base las devolvía en UTC (`+00`). | La base usaba el huso del equipo (`-04`) y la «última modificación» se mostraba sin formato. La sesión de Postgres se fija en UTC y el formateador acepta cualquier huso. |
-| 8 | Botones con `title` para mostrar una ayuda. | En el árbol de accesibilidad, el `title` reemplazaba el nombre: «Simular» se anunciaba como «Hace lo mismo sin escribir nada». Se quitaron los `title` y los dos «Simular» recibieron nombres distintos. |
-| 9 | Tablas con desplazamiento horizontal en pantallas angostas. | En un teléfono la deuda quedaba fuera de la vista. Clientes, detalle de corrida y facturas del expediente usan tarjetas en pantallas angostas. |
-| 10 | — | El test original del entorno fallaba en Windows (`new URL(...).pathname` deja `/F:/prueba%20...`). Se corrigió con `fileURLToPath`. No es un error de la IA: es un hallazgo del entorno entregado. |
+| Análisis | Lectura del enunciado, de la guía de la API y del código de la API simulada para listar sus rarezas. | Definí el alcance, investigué el producto de Cobrix y prioricé lo que más pesa en la evaluación. |
+| Exploración | Un script que volcó por HTTP los 27 contratos y el libro de pagos. | Verifiqué a mano los números de §5 antes de escribir reglas (54 − 9 − 2 − 1 = 42 cuotas, USD 1.235,00). |
+| Código | Generación de funciones, pruebas y componentes a partir de mis indicaciones. | Revisé el código, corregí los defectos que encontré y decidí cada caso ambiguo (sección 12 del documento de diseño). |
+| Pruebas | Redacción de casos a partir de las reglas y de las fallas que quería cubrir. | Definí qué romper a propósito (tokens vencidos, errores 5xx, respuestas contradictorias, concurrencia). |
+| Arquitectura | Propuestas de organización del repositorio. | Pedí separar frontend y backend, aplicar capas y poner el ISP detrás de un adaptador; normalizar errores y agregar registro. |
+| Documentación | Borradores de diagramas y tablas. | Revisé contenido y redacción, pedí un tono formal y validé cada diagrama. |
 
-## Verificado a mano, no asumido
+## Correcciones durante el desarrollo
 
-- Que `lista_ids_contratos` sin `estado` devuelve los 27 contratos (con `estado` solo devuelve los activos).
-- Que el abono parcial **no** debe rebajar el saldo en Cobrix: 1.235 − 280 = 955 solo cuadra si la factura de LUIS conserva sus USD 20.
-- Que la cuota del mes sin cobros aparece en el libro con fecha de fin de mes (2026-10-31). Por eso, si se consulta el libro hasta hoy, no aparece y hay que consultar el contrato.
+| # | Primera versión | Corrección y motivo |
+|---|---|---|
+| 1 | El lector del libro rechazaba cualquier monto negativo y, ante una fila ilegible, descartaba el libro entero del contrato. | La prueba de punta a punta lo reveló: 900115 (VALENTINA PAZ) tiene una cuota exonerada con `descuento: -25`, y sus otras dos facturas quedaban «en revisión». El descuento ahora admite signo, porque es la convención de la API, y una fila ilegible solo invalida su propia cuota. |
+| 2 | Si la cuota no estaba en el libro pero sí pendiente en el contrato, se consideraba «sigue abierta» sin comparar el monto. | Ahora también se compara el saldo del contrato, que podría ser un abono parcial. La ausencia en ambos lados sigue siendo «sin evidencia», nunca «pagada». |
+| 3 | El saldo informado por el ISP se limpiaba en todas las facturas abiertas. | También borraba el dato de las facturas cuya consulta había fallado. Ahora solo se limpia en las que se revisaron. |
+| 4 | Ante un 401, cada consulta en paralelo iniciaba su propia sesión. | La prueba de token vencido mostró 5 inicios de sesión en vez de 2. Implementé un inicio de sesión único compartido, y el token solo se descarta si sigue siendo el que falló. |
+| 5 | Un contrato cuya respuesta no era una lista quedaba excluido sin fila en el detalle de la corrida. | Ahora se registra una fila a nivel de contrato con el motivo, para que el operador vea por qué no entró. |
+| 6 | Las facturas se numeraban con una secuencia de PostgreSQL. | Al revisar el panel vi la corrida #34 justo después de la #2: las secuencias pierden valores si el proceso se detiene de golpe. Facturas y corridas pasaron a numerarse «último + 1» dentro de la transacción. Una prueba fija FAC-000001 a FAC-000042. |
+| 7 | Las fechas se formateaban suponiendo que la base respondía en UTC. | La base usaba el huso del equipo (`-04`). Fijé la sesión en UTC y el formateador acepta cualquier huso. |
+| 8 | Botones con `title` como ayuda. | El `title` reemplazaba el nombre accesible («Simular» se anunciaba como «Hace lo mismo sin escribir nada»). Quité los `title` y di nombres distintos a cada «Simular». |
+| 9 | Tablas con desplazamiento horizontal en pantallas angostas. | En un teléfono la deuda quedaba fuera de la vista. Clientes, detalle de corrida y facturas usan tarjetas en pantallas angostas. |
+| 10 | En la reorganización por capas, el caso de uso de pagadas guardaba la conexión con el ISP entre corridas. | Habría usado credenciales viejas tras un cambio de configuración. La conexión ahora se crea por corrida y se pasa explícitamente. |
+| 11 | El registro de configuración incluía el campo `passwordChanged`. | El enmascarador lo ocultaba por contener «password», lo que confundía al leer el log. Lo renombré `credentialsUpdated`. |
+| 12 | — | La prueba original del entorno fallaba en Windows (`new URL(...).pathname` deja `/F:/prueba%20...`). La corregí con `fileURLToPath`. Es un hallazgo del entorno entregado. |
+
+## Verificado a mano
+
+- Que `lista_ids_contratos` sin `estado` devuelve los 27 contratos; con `estado`, solo los activos.
+- Que el abono parcial no debe rebajar el saldo en Cobrix: 1.235 − 280 = 955 solo cuadra si la factura de LUIS GOMEZ conserva sus USD 20.
+- Que la cuota del mes sin cobros aparece en el libro con fecha de fin de mes, por lo que al consultar hasta hoy hay que verificarla en el contrato.
+- Que el panel muestra los mismos números que las pruebas, recorriendo el ciclo completo en el navegador, en escritorio y en teléfono.
