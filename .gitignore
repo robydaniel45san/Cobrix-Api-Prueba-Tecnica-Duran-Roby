@@ -2,6 +2,6 @@ node_modules
 data/*.sqlite-wal
 data/*.sqlite-shm
 data/cobrix/
-panel/dist/
+frontend/dist/
 *.log
 .DS_Store

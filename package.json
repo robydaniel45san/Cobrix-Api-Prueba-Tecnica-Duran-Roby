@@ -10,11 +10,11 @@
 	"scripts": {
 		"start": "npm run build && node --disable-warning=ExperimentalWarning src/main.ts",
 		"serve": "node --disable-warning=ExperimentalWarning src/main.ts",
-		"build": "vite build --config panel/vite.config.ts",
-		"dev": "vite --config panel/vite.config.ts",
+		"build": "vite build --config frontend/vite.config.ts",
+		"dev": "vite --config frontend/vite.config.ts",
 		"seed": "node --disable-warning=ExperimentalWarning src/billing-api/seed.ts",
-		"test": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 \"test/**/*.test.ts\"",
-		"typecheck": "tsc --noEmit && tsc --noEmit -p panel"
+		"test": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 \"test/**/*.test.ts\" \"backend/test/**/*.test.ts\"",
+		"typecheck": "tsc --noEmit && tsc --noEmit -p frontend"
 	},
 	"devDependencies": {
 		"@radix-ui/react-alert-dialog": "1.1.23",
