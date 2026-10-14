@@ -7,6 +7,7 @@ import assert from 'node:assert/strict'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { after, before, describe, it } from 'node:test'
 
 import { SANDBOX_API_USER, seedBillingApi } from '../src/billing-api/seed.ts'
@@ -27,7 +28,7 @@ describe('entorno de la prueba', () => {
 		seedBillingApi(join(dir, 'billing-api.sqlite'))
 		api = createBillingApiServer(join(dir, 'billing-api.sqlite'))
 		base = `http://127.0.0.1:${await api.listen(0)}`
-		panel = createApp({ simulatorUrl: base, assignmentPath: new URL('../docs/ENUNCIADO.md', import.meta.url).pathname })
+		panel = createApp({ simulatorUrl: base, assignmentPath: fileURLToPath(new URL('../docs/ENUNCIADO.md', import.meta.url)) })
 		await new Promise<void>(resolve => panel.listen(0, '127.0.0.1', resolve))
 		const address = panel.address()
 		panelBase = `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}`

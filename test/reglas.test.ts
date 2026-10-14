@@ -238,7 +238,22 @@ describe('pagos: lectura estricta del libro', () => {
 	it('filas de otro contrato o sin forma: el libro entero no se usa', () => {
 		assert.equal(readLedger(900101, { data: [entry({ id_contrato: 900102 })] }).kind, 'contradictory')
 		assert.equal(readLedger(900101, { data: [entry({}, { id_contrato: 900102 })] }).kind, 'contradictory')
-		assert.equal(readLedger(900101, { data: [entry({}, { saldo_cuota: null })] }).kind, 'contradictory')
 		assert.equal(readLedger(900101, { message: 'error' }).kind, 'contradictory')
+	})
+
+	it('una fila con montos ilegibles invalida solo su cuota, no las demás', () => {
+		const reading = readLedger(900101, { data: [entry({}, { id_cuota: 7000008, saldo_cuota: null }), entry()] })
+		assert.equal(reading.kind, 'ok')
+		if (reading.kind !== 'ok') return
+		assert.match(reading.invalid.get('7000008') ?? '', /montos no válidos/)
+		assert.equal(reading.byInstallment.get('7000009')?.length, 1)
+	})
+
+	it('el descuento llega con signo: una cuota exonerada trae descuento = -tarifa', () => {
+		const reading = readLedger(900115, { data: [entry({ id_contrato: 900115 }, { id_contrato: 900115, descuento: -25, saldo_cuota: 0 })] })
+		assert.equal(reading.kind, 'ok')
+		const rows = reading.kind === 'ok' ? reading.byInstallment.get('7000009') ?? [] : []
+		assert.equal(rows[0]?.discountCents, -2500)
+		assert.deepEqual(classifyPayment({ externalId: '7000009', balanceCents: 2500 }, rows), { kind: 'exonerated' })
 	})
 })

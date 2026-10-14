@@ -7,9 +7,13 @@
  *   must agree with each other.
  * - `success` comes as `false` even with data: it is ignored, the shape is what is checked.
  * - It also lists future (and phantom) installments: callers look up the ones they need.
+ * - The discount comes signed: an exonerated month shows `descuento: -tarifa`.
+ *
+ * Rows of another contract invalidate the whole ledger (the response is wrong). A row with
+ * unreadable amounts only invalidates its own installment.
  */
 
-import { toCents, type Cents } from './money.ts'
+import { toCents, toSignedCents, type Cents } from './money.ts'
 
 export interface LedgerRow {
 	/** Collection invoice in the invoice manager; 0 = none. */
@@ -25,7 +29,12 @@ export interface LedgerRow {
 }
 
 export type LedgerReading =
-	| { readonly kind: 'ok'; readonly byInstallment: ReadonlyMap<string, readonly LedgerRow[]> }
+	| {
+		readonly kind: 'ok'
+		readonly byInstallment: ReadonlyMap<string, readonly LedgerRow[]>
+		/** Installments with at least one unreadable row, and why. */
+		readonly invalid: ReadonlyMap<string, string>
+	}
 	| { readonly kind: 'contradictory'; readonly reason: string }
 
 type Row = Record<string, unknown>
@@ -37,6 +46,7 @@ export function readLedger(contractId: number, body: unknown): LedgerReading {
 	if (!isRow(body) || !Array.isArray(body.data)) return contradictory('el libro no trae la lista «data»')
 
 	const byInstallment = new Map<string, LedgerRow[]>()
+	const invalid = new Map<string, string>()
 	for (const raw of body.data as unknown[]) {
 		if (!isRow(raw) || !isRow(raw.detalle_pago)) return contradictory('hay filas del libro sin detalle_pago')
 		const detail = raw.detalle_pago
@@ -49,13 +59,13 @@ export function readLedger(contractId: number, body: unknown): LedgerReading {
 		if (typeof invoiceId !== 'number' || !Number.isInteger(invoiceId) || invoiceId < 0) return contradictory('id_factura no es un entero')
 		if (typeof installmentId !== 'number' || !Number.isInteger(installmentId)) return contradictory('id_cuota no es un entero')
 		const issuedOn = typeof raw.fecha_emision === 'string' && DATE.test(raw.fecha_emision) ? raw.fecha_emision : undefined
-		if (!issuedOn) return contradictory(`la fila de la cuota ${installmentId} no trae fecha de emisión`)
 		const feeCents = toCents(detail.tarifa)
 		const paidCents = toCents(detail.valor_pago)
-		const discountCents = toCents(detail.descuento ?? 0)
+		const discountCents = toSignedCents(detail.descuento ?? 0)
 		const balanceCents = toCents(detail.saldo_cuota)
-		if (feeCents === undefined || paidCents === undefined || discountCents === undefined || balanceCents === undefined) {
-			return contradictory(`la cuota ${installmentId} trae montos no válidos`)
+		if (!issuedOn || feeCents === undefined || paidCents === undefined || discountCents === undefined || balanceCents === undefined) {
+			invalid.set(String(installmentId), `el libro trae la cuota ${installmentId} con ${issuedOn ? 'montos no válidos' : 'fecha no válida'}`)
+			continue
 		}
 		const row: LedgerRow = {
 			invoiceId,
@@ -69,5 +79,5 @@ export function readLedger(contractId: number, body: unknown): LedgerReading {
 		list.push(row)
 		byInstallment.set(row.installmentId, list)
 	}
-	return { kind: 'ok', byInstallment }
+	return { kind: 'ok', byInstallment, invalid }
 }

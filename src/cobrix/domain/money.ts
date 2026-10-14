@@ -12,6 +12,13 @@ export function toCents(value: unknown): Cents | undefined {
 	return Math.round(number * 100)
 }
 
+/** Like toCents but the sign is allowed (discounts come negative). */
+export function toSignedCents(value: unknown): Cents | undefined {
+	const number = typeof value === 'string' && value.trim() !== '' ? Number(value) : value
+	if (typeof number !== 'number' || !Number.isFinite(number)) return undefined
+	return Math.round(number * 100)
+}
+
 export function fromCents(cents: Cents): number {
 	return cents / 100
 }
