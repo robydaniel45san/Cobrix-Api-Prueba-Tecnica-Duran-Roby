@@ -78,6 +78,9 @@ export interface Summary {
 	paidAmountCents: number
 	aging: Array<{ bucket: string; label: string; invoices: number; amountCents: number }>
 	overdueCustomers: number
+	overdue30: { invoices: number; customers: number; amountCents: number }
+	partials: Array<{ invoiceId: number; customerId: string; customerName: string; period: string; balanceCents: number; ispBalanceCents: number }>
+	lastApplied: { import: Run | null; paid: Run | null }
 	company: Company
 	provider: { name: string; baseUrl: string; configured: boolean; autoEnabled: boolean; autoTime: string | null; autoLastDate: string | null }
 	lastRuns: Run[]
@@ -95,6 +98,7 @@ export interface CustomerRow {
 	paidInvoices: number
 	debtCents: number
 	oldestDueDate: string | null
+	partialInvoices: number
 }
 
 export interface CustomerFile {

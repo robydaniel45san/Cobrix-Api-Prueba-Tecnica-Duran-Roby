@@ -81,13 +81,15 @@ flowchart LR
 | CU-01 Configurar empresa | §3.1 | `PUT /api/settings/company` | Configuración |
 | CU-02 Configurar proveedor | §3.1 | `PUT /api/settings/provider` | Configuración |
 | CU-03 Probar conexión | §3.1 | `POST /api/settings/provider/test` | Configuración |
-| CU-04 y CU-05 Simular importación e importar | §3.2 | `POST /api/runs` (`kind: import`) | Sincronización |
-| CU-06 y CU-07 Simular y actualizar pagadas | §3.3 | `POST /api/runs` (`kind: paid`) | Sincronización |
-| CU-08 Consultar corridas | §3.4 | `GET /api/runs`, `GET /api/runs/:id` | Sincronización, detalle de corrida |
+| CU-04 y CU-05 Simular importación e importar | §3.2 | `POST /api/runs` (`kind: import`) | Sincronización → Revisar cambios → Listo |
+| CU-06 y CU-07 Simular y actualizar pagadas | §3.3 | `POST /api/runs` (`kind: paid`) | Sincronización → Revisar cambios → Listo |
+| CU-08 Consultar corridas | §3.4 | `GET /api/runs`, `GET /api/runs/:id` | Historial y detalle de sincronización |
 | CU-09 Buscar clientes | §3.5 | `GET /api/customers?q=` | Clientes |
 | CU-10 Consultar expediente | §3.6 | `GET /api/customers/:id` | Expediente |
-| CU-11 Consultar resumen | §3.8 | `GET /api/summary` | Resumen |
-| CU-12 Corrida automática | §3.1 | Programador interno | Resumen (estado) |
+| CU-11 Consultar resumen | §3.8 | `GET /api/summary` | Inicio |
+| CU-12 Corrida automática | §3.1 | Programador interno | Configuración, estado en Inicio |
+
+**Diseño de la interfaz.** Diseñé el panel a partir de un [mockup](https://claude.ai/artifact/R3FpkM9C6GdhErLoQeNGEZ) centrado en las tareas del operador, no en los endpoints: mantener los datos al día, cobrar y resolver lo pendiente. La simulación del enunciado es el primer paso de cada sincronización («Revisa los cambios antes de aplicarlos»), y los resultados se explican en lenguaje de negocio; los contadores con su nombre interno quedan en un «Detalle técnico» plegado. Un asistente guía la primera conexión.
 
 ### CU-02 Configurar proveedor
 

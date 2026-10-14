@@ -23,7 +23,7 @@ import type { SecretCipher, Store } from '../../application/ports/store.ts'
 import type { RunLauncher } from '../../application/run-launcher.ts'
 import { getProvider, normalizeBaseUrl, saveCompany, saveProvider } from '../../application/settings.ts'
 import type { Queryable } from '../persistence/database.ts'
-import { getCustomerFile, getRun, getSummary, listCustomers, listRuns } from '../persistence/read-models.ts'
+import { getCustomerFile, getRun, getSummary, lastAppliedRun, listCustomers, listRuns } from '../persistence/read-models.ts'
 import { badRequest, notFound } from './errors.ts'
 
 export interface RouteDeps {
@@ -69,7 +69,8 @@ const summary: Handler = async (_request, deps) => {
 			name: provider.name, baseUrl: provider.baseUrl, configured: provider.baseUrl !== '' && provider.hasPassword,
 			autoEnabled: provider.autoEnabled, autoTime: provider.autoTime, autoLastDate: provider.autoLastDate,
 		},
-		lastRuns: await listRuns(deps.readDb, 5),
+		lastRuns: await listRuns(deps.readDb, 10),
+		lastApplied: { import: await lastAppliedRun(deps.readDb, 'import'), paid: await lastAppliedRun(deps.readDb, 'paid') },
 		inProgress: deps.launcher.inProgress ?? null,
 		today: deps.today(),
 	})

@@ -31,11 +31,12 @@ La fecha de la prueba queda fija en 2026-10-13, como pide el enunciado.
 
 ## Recorrido sugerido
 
-1. **Configuración:** completa los datos de la empresa y pulsa **Conectar al sandbox local** (o ingresa a mano la URL `http://127.0.0.1:4310`, el usuario `cobrix` y la contraseña `cobrix-sandbox`). La prueba de conexión debe informar 27 contratos.
-2. **Sincronización:** pulsa **Simular** en la importación (42 cuotas, sin escribir nada) y luego **Importar** (20 clientes, 42 facturas, USD 1.235,00).
-3. **Caja del ISP:** en el Swagger, sección «Simulador», registra los pagos de §5 del enunciado con `POST /__sim/pagar` y `POST /__sim/anular`.
-4. **Sincronización:** pulsa **Actualizar pagadas** (8 pagadas, 1 abono parcial; quedan 34 abiertas por USD 955,00).
-5. **Clientes y Resumen:** busca a LUIS GOMEZ, abre su expediente y revisa la antigüedad de la deuda.
+1. **Asistente:** en Inicio pulsa **Empezar**. Completa la empresa, pulsa **Usar el sandbox local de la prueba** (o ingresa la URL `http://127.0.0.1:4310`, el usuario `cobrix` y la contraseña `cobrix-sandbox`), deja las reglas recomendadas y mira la **vista previa** (20 clientes, 42 facturas, USD 1.235,00, y las 12 cuotas que no se traen con su motivo). Pulsa **Traer clientes y facturas**.
+2. **Caja del ISP:** en el Swagger, sección «Simulador», registra los pagos de §5 del enunciado con `POST /__sim/pagar` y `POST /__sim/anular`.
+3. **Sincronizar ahora:** desde la barra superior. La vista previa muestra 8 facturas que pasarían a pagadas, 1 abono parcial y 33 sin cambios. Pulsa **Aplicar cambios**: quedan 34 abiertas por USD 955,00.
+4. **Inicio y Clientes:** revisa a quién cobrar primero, filtra por «Abono parcial» y abre el expediente de LUIS GOMEZ.
+
+En **Sincronización** están también las dos acciones del enunciado por separado («Traer facturas nuevas» y «Revisar cobros del ISP»), cada una con su vista previa (simulación) antes de aplicar, y el historial con el detalle por cuota.
 
 Para volver al estado inicial, detén el servidor, borra `data/cobrix/` (datos de Cobrix) y restablece el sandbox con `POST /__sim/reiniciar` desde el Swagger.
 

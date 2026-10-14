@@ -12,13 +12,16 @@ import { ClientesPage } from '@/pages/clientes'
 import { ConfiguracionPage } from '@/pages/configuracion'
 import { CorridaPage } from '@/pages/corrida'
 import { ExpedientePage } from '@/pages/expediente'
-import { ResumenPage } from '@/pages/resumen'
+import { BienvenidaPage } from '@/pages/bienvenida'
+import { InicioPage } from '@/pages/inicio'
+import { ListoPage } from '@/pages/listo'
+import { RevisarPage } from '@/pages/revisar'
 import { SincronizacionPage } from '@/pages/sincronizacion'
 
 import './index.css'
 
 function NotFound() {
-	return <EmptyState icon={Compass} title="Esta página no existe" description="Revisa la dirección o vuelve al resumen." action={<Link to="/" className={buttonVariants()}>Ir al resumen</Link>} />
+	return <EmptyState icon={Compass} title="Esta página no existe" description="Revisa la dirección o vuelve al inicio." action={<Link to="/" className={buttonVariants()}>Ir al inicio</Link>} />
 }
 
 createRoot(document.getElementById('root') as HTMLElement).render(
@@ -27,10 +30,13 @@ createRoot(document.getElementById('root') as HTMLElement).render(
 			<RunsProvider>
 				<Routes>
 					<Route element={<Layout />}>
-						<Route index element={<ResumenPage />} />
+						<Route index element={<InicioPage />} />
+						<Route path="bienvenida" element={<BienvenidaPage />} />
 						<Route path="clientes" element={<ClientesPage />} />
 						<Route path="clientes/:id" element={<ExpedientePage />} />
 						<Route path="sincronizacion" element={<SincronizacionPage />} />
+						<Route path="sincronizacion/revisar" element={<RevisarPage />} />
+						<Route path="sincronizacion/listo" element={<ListoPage />} />
 						<Route path="sincronizacion/:id" element={<CorridaPage />} />
 						<Route path="configuracion" element={<ConfiguracionPage />} />
 						<Route path="*" element={<NotFound />} />

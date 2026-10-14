@@ -19,6 +19,13 @@ export interface Summary {
 	/** Open debt by days past due, as of `today`. */
 	readonly aging: ReadonlyArray<{ readonly bucket: string; readonly label: string; readonly invoices: number; readonly amountCents: Cents }>
 	readonly overdueCustomers: number
+	/** Debt more than 30 days past its due date: what to collect first. */
+	readonly overdue30: { readonly invoices: number; readonly customers: number; readonly amountCents: Cents }
+	/** Open invoices the ISP reports as partially paid (they stay open in Cobrix). */
+	readonly partials: ReadonlyArray<{
+		readonly invoiceId: number; readonly customerId: string; readonly customerName: string; readonly period: string
+		readonly balanceCents: Cents; readonly ispBalanceCents: Cents
+	}>
 }
 
 const AGING = [
@@ -49,6 +56,16 @@ export async function getSummary(db: Queryable, today: string): Promise<Summary>
 		slot.invoices++
 		slot.amountCents += cents(row.balance)
 	}
+	const [late] = await db.query<Row>(
+		`SELECT count(*)::int AS invoices, count(DISTINCT customer_id)::int AS customers, COALESCE(sum(balance), 0)::text AS amount
+		 FROM invoice WHERE status = 'open' AND ($1::date - due_date) > 30`,
+		[today],
+	)
+	const partials = await db.query<Row>(
+		`SELECT i.id, i.customer_id, c.name, i.period, i.balance::text, i.isp_balance::text
+		 FROM invoice i JOIN customer c ON c.id = i.customer_id
+		 WHERE i.status = 'open' AND i.isp_balance IS NOT NULL ORDER BY i.period, c.name`,
+	)
 	const t = totals ?? {}
 	return {
 		customers: Number(t.customers ?? 0),
@@ -59,6 +76,11 @@ export async function getSummary(db: Queryable, today: string): Promise<Summary>
 		paidAmountCents: cents(t.paid_amount),
 		aging,
 		overdueCustomers: Number(t.overdue_customers ?? 0),
+		overdue30: { invoices: Number(late?.invoices ?? 0), customers: Number(late?.customers ?? 0), amountCents: cents(late?.amount) },
+		partials: partials.map(row => ({
+			invoiceId: Number(row.id), customerId: String(row.customer_id), customerName: String(row.name), period: String(row.period),
+			balanceCents: cents(row.balance), ispBalanceCents: cents(row.isp_balance),
+		})),
 	}
 }
 
@@ -72,6 +94,8 @@ export interface CustomerListItem {
 	readonly paidInvoices: number
 	readonly debtCents: Cents
 	readonly oldestDueDate: string | null
+	/** Open invoices with a partial payment reported by the ISP. */
+	readonly partialInvoices: number
 }
 
 export async function listCustomers(db: Queryable, search: string): Promise<CustomerListItem[]> {
@@ -84,7 +108,8 @@ export async function listCustomers(db: Queryable, search: string): Promise<Cust
 			count(i.id) FILTER (WHERE i.status = 'open')::int AS open,
 			count(i.id) FILTER (WHERE i.status = 'paid')::int AS paid,
 			COALESCE(sum(i.balance) FILTER (WHERE i.status = 'open'), 0)::text AS debt,
-			to_char(min(i.due_date) FILTER (WHERE i.status = 'open'), 'YYYY-MM-DD') AS oldest_due
+			to_char(min(i.due_date) FILTER (WHERE i.status = 'open'), 'YYYY-MM-DD') AS oldest_due,
+			count(i.id) FILTER (WHERE i.status = 'open' AND i.isp_balance IS NOT NULL)::int AS partial
 		 FROM customer c LEFT JOIN invoice i ON i.customer_id = c.id
 		 WHERE $1 = '' OR c.name ILIKE '%' || $1 || '%' OR c.document ILIKE '%' || $1 || '%'
 			OR ($2 <> '' AND c.id ILIKE '%' || $2 || '%')
@@ -102,6 +127,7 @@ export async function listCustomers(db: Queryable, search: string): Promise<Cust
 		paidInvoices: Number(row.paid),
 		debtCents: cents(row.debt),
 		oldestDueDate: (row.oldest_due as string | null) ?? null,
+		partialInvoices: Number(row.partial),
 	}))
 }
 
@@ -180,6 +206,15 @@ const RUN_COLUMNS = `id, kind, dry_run, trigger, status, started_at::text AS sta
 export async function listRuns(db: Queryable, limit: number) {
 	const rows = await db.query<Row>(`SELECT ${RUN_COLUMNS} FROM run ORDER BY id DESC LIMIT $1`, [limit])
 	return rows.map(runRow)
+}
+
+/** The last completed, non-simulated run of a kind: «the last time this was applied». */
+export async function lastAppliedRun(db: Queryable, kind: 'import' | 'paid') {
+	const [row] = await db.query<Row>(
+		`SELECT ${RUN_COLUMNS} FROM run WHERE kind = $1 AND NOT dry_run AND status = 'completed' ORDER BY id DESC LIMIT 1`,
+		[kind],
+	)
+	return row ? runRow(row) : null
 }
 
 export async function getRun(db: Queryable, id: number) {

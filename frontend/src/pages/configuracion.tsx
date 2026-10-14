@@ -6,6 +6,7 @@
 
 import { Building2, CalendarClock, CheckCircle2, CircleAlert, Filter, Gauge, Loader2, PlugZap, Server, Wand2, type LucideIcon } from 'lucide-react'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { PageHeader } from '@/components/layout'
@@ -180,7 +181,7 @@ function ProviderSettings({ settings, onSaved }: { settings: Settings; onSaved: 
 
 	return (
 		<form onSubmit={submit} noValidate className="space-y-8">
-			<Category icon={Server} title="Conexión" description="API del administrador de facturas del ISP. La contraseña se guarda cifrada y nunca se vuelve a mostrar.">
+			<Category icon={Server} title="Sistema del ISP" description="Dónde está el sistema de facturación de tu proveedor y con qué usuario entrar. La contraseña se guarda cifrada y nunca se vuelve a mostrar.">
 				<div className="grid gap-4 sm:grid-cols-2">
 					<Field label="Nombre visible" error={errors.name}>{props => <Input {...props} value={form.name} onChange={text('name')} />}</Field>
 					<Field label="URL de la API" error={errors.baseUrl} hint="Con o sin /api/v1.">{props => <Input {...props} value={form.baseUrl} onChange={text('baseUrl')} placeholder="https://facturas.miisp.com" inputMode="url" />}</Field>
@@ -207,7 +208,7 @@ function ProviderSettings({ settings, onSaved }: { settings: Settings; onSaved: 
 				)}
 			</Category>
 
-			<Category icon={Filter} title="Qué se importa" description="Solo cuotas pendientes, en USD coherente, de titulares con cédula o RIF válidos.">
+			<Category icon={Filter} title="Qué se cobra" description="Qué cuotas del ISP llegan a Cobrix. Solo pendientes, en dólares y de titulares con cédula o RIF válidos.">
 				<div>
 					<p className="mb-2 text-sm font-medium">Estados de contrato que se importan</p>
 					<div className="flex flex-wrap gap-2">
@@ -240,19 +241,19 @@ function ProviderSettings({ settings, onSaved }: { settings: Settings; onSaved: 
 				</div>
 			</Category>
 
-			<Category icon={Gauge} title="Topes y libro de pagos" description="Lo que exceda un tope queda frenado y se importa en la siguiente corrida. Vacío: sin tope.">
+			<Category icon={Gauge} title="Topes y cobros" description="Límites por sincronización: lo que exceda queda frenado y entra en la siguiente. Vacío: sin tope.">
 				<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-					<Field label="Facturas nuevas por corrida" error={errors.maxNewInvoices}>{props => <Input {...props} type="number" min={1} value={form.maxNewInvoices} onChange={text('maxNewInvoices')} placeholder="Sin tope" />}</Field>
-					<Field label="Monto nuevo por corrida (USD)" error={errors.maxNewAmount}>{props => <Input {...props} type="number" min={0.01} step="0.01" value={form.maxNewAmount} onChange={text('maxNewAmount')} placeholder="Sin tope" />}</Field>
-					<Field label="Meses del libro de pagos" error={errors.ledgerMonths} hint="Usado por «Actualizar pagadas». De 1 a 12; por defecto 7.">
+					<Field label="Facturas nuevas por sincronización" error={errors.maxNewInvoices}>{props => <Input {...props} type="number" min={1} value={form.maxNewInvoices} onChange={text('maxNewInvoices')} placeholder="Sin tope" />}</Field>
+					<Field label="Monto nuevo por sincronización (USD)" error={errors.maxNewAmount}>{props => <Input {...props} type="number" min={0.01} step="0.01" value={form.maxNewAmount} onChange={text('maxNewAmount')} placeholder="Sin tope" />}</Field>
+					<Field label="Meses de cobros a revisar" error={errors.ledgerMonths} hint="Cuánto hacia atrás se revisan los cobros del ISP. De 1 a 12; por defecto 7.">
 						{props => <Input {...props} type="number" min={0} max={12} value={form.ledgerMonths} onChange={text('ledgerMonths')} />}
 					</Field>
 				</div>
 			</Category>
 
-			<Category icon={CalendarClock} title="Corrida automática" description="Una vez al día: importar y después actualizar pagadas, a la hora de Caracas.">
+			<Category icon={CalendarClock} title="Sincronización automática" description="Una vez al día, a la hora de Caracas: trae las facturas nuevas y después revisa los cobros del ISP.">
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-					<CheckboxPill checked={form.autoEnabled} onChange={checked => set('autoEnabled', checked)}>Activar la corrida diaria</CheckboxPill>
+					<CheckboxPill checked={form.autoEnabled} onChange={checked => set('autoEnabled', checked)}>Sincronizar todos los días</CheckboxPill>
 					<Field label="Hora" error={errors.autoTime} className="sm:w-40">
 						{props => <Input {...props} type="time" value={form.autoTime} onChange={text('autoTime')} disabled={!form.autoEnabled} />}
 					</Field>
@@ -275,7 +276,8 @@ export function ConfiguracionPage() {
 
 	return (
 		<>
-			<PageHeader title="Configuración" description="Datos de la empresa y del administrador de facturas del que Cobrix importa clientes, facturas y pagos." />
+			<PageHeader title="Configuración" description="Tu empresa y el sistema de facturación del ISP del que Cobrix trae clientes, facturas y cobros."
+				actions={<Link to="/bienvenida" className="text-sm font-medium text-primary hover:underline">Abrir el asistente guiado</Link>} />
 			{error && <ErrorNotice message={error.message} action={<button className="font-medium underline" onClick={reload}>Reintentar</button>} />}
 			{loading && !settings && <div className="space-y-4"><Skeleton className="h-48" /><Skeleton className="h-96" /></div>}
 			{settings && (

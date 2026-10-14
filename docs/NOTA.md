@@ -32,12 +32,13 @@ La integración completa del enunciado: importación y actualización de pagadas
 
 ## Punto diferencial
 
-- **Progreso de corridas en vivo** (Server-Sent Events): el operador ve contrato por contrato mientras corre, también desde otra pestaña.
-- **Antigüedad de la deuda** en el resumen, con los clientes que pasaron su fecha de corte: ayuda a decidir a quién cobrar primero.
+- **Un panel diseñado desde el operador, no desde la API.** Partí de un mockup de sus tareas: la simulación es el primer paso de cada sincronización («revisa los cambios antes de aplicarlos»), cada exclusión se explica en una frase, Inicio responde a quién cobrar primero y qué necesita atención, y un asistente guía la primera conexión.
+- **Progreso de sincronización en vivo** (Server-Sent Events): el operador ve contrato por contrato mientras corre, también desde otra pestaña.
+- **Antigüedad de la deuda** y clientes filtrados por situación (vencidos, con abono parcial, al día).
 - **Contadores con el nombre interno de Cobrix** en el detalle de cada corrida, para que operación y soporte hablen el mismo idioma.
 - **Robustez verificada con fallas inyectadas**, numeración de facturas sin huecos, registro estructurado sin secretos y un formato único de errores en la API.
 - **Documentación de diseño** con casos de uso, contratos de API y 15 diagramas.
 
 ## Uso de IA
 
-Trabajé con Claude Code como asistente en todas las etapas: análisis del enunciado, exploración de la API, código, pruebas y documentación. Las decisiones, el criterio y la revisión fueron míos; la estructura y la documentación las desarrollamos en conjunto. Corregí trece puntos durante el desarrollo: cuatro los detectaron las pruebas que diseñé para romper el sistema y el resto, la revisión del código y del panel en el navegador. El caso más ilustrativo: la primera versión del lector del libro descartaba el libro entero de un contrato ante una cuota exonerada con descuento negativo. El detalle está en la [bitácora](BITACORA-IA.md).
+Trabajé con Claude Code como asistente en todas las etapas: análisis del enunciado, exploración de la API, código, pruebas y documentación. Las decisiones, el criterio y la revisión fueron míos; la estructura y la documentación las desarrollamos en conjunto. Corregí catorce puntos durante el desarrollo: cuatro los detectaron las pruebas que diseñé para romper el sistema y el resto, la revisión del código y del panel en el navegador. El caso más ilustrativo: la primera versión del lector del libro descartaba el libro entero de un contrato ante una cuota exonerada con descuento negativo. El detalle está en la [bitácora](BITACORA-IA.md).

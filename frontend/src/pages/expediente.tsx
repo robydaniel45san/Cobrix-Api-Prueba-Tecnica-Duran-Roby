@@ -1,191 +1,199 @@
-import { CheckCircle2, FileDown, UserPlus } from 'lucide-react'
-import type { ReactNode } from 'react'
+/**
+ * Expediente (ENUNCIADO §3.6), built to collect: how much and since when, how to reach the
+ * customer, the invoices from oldest to newest (each one unfolds to every field the assignment
+ * lists), the paid ones with the ISP receipt, the contracts and the history.
+ */
+
+import { CheckCircle2, ChevronDown, FileDown, Mail, Phone, UserPlus } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { PageHeader, StatCard } from '@/components/layout'
+import { PageHeader, Section } from '@/components/layout'
 import { useRuns } from '@/components/runs'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardBody, CardHeader } from '@/components/ui/card'
+import { buttonVariants } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { ErrorNotice, Skeleton } from '@/components/ui/feedback'
-import { Table, Td, Th, Tr } from '@/components/ui/table'
 import { api, type CustomerFile } from '@/lib/api'
-import { date, dateTime, money, period } from '@/lib/format'
+import { capitalize, date, dateTime, daysBetween, money, periodLong, plural } from '@/lib/format'
 import { useAsync } from '@/lib/hooks'
-import { CONTRACT_STATUS_TONE } from '@/lib/vocabulary'
+import { cn } from '@/lib/utils'
+import { CONTRACT_STATUS, SITUATION, situationOf } from '@/lib/vocabulary'
+
+type Invoice = CustomerFile['invoices'][number]
 
 const EVENT = {
-	customer_created: { label: 'Cliente creado', icon: UserPlus, color: 'bg-primary-soft text-primary' },
-	invoice_imported: { label: 'Factura importada', icon: FileDown, color: 'bg-slate-100 text-slate-600' },
+	customer_created: { label: 'Cliente creado', icon: UserPlus, color: 'bg-slate-100 text-slate-600' },
+	invoice_imported: { label: 'Llegó una factura del ISP', icon: FileDown, color: 'bg-primary-soft text-primary' },
 	invoice_paid: { label: 'Pagada en el ISP', icon: CheckCircle2, color: 'bg-emerald-50 text-emerald-700' },
 } as const
 
-function Row({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
 	return (
-		<div className="grid grid-cols-[120px_1fr] gap-3 py-1.5 text-sm">
-			<dt className="text-muted">{label}</dt>
-			<dd className="min-w-0 break-words">{children}</dd>
+		<div className="min-w-0">
+			<dt className="text-xs text-muted">{label}</dt>
+			<dd className="break-words text-sm">{children}</dd>
 		</div>
 	)
 }
 
-function Invoices({ file }: { file: CustomerFile }) {
+function OpenInvoice({ invoice, today }: { invoice: Invoice; today: string }) {
+	const [open, setOpen] = useState(false)
+	const age = daysBetween(invoice.dueDate, today)
 	return (
-		<Card className="mt-6">
-			<CardHeader title="Facturas" description="Una factura por cuota del administrador. El vencimiento es el primer día del periodo; el corte suma los días de gracia." />
-			<ul className="divide-y divide-line lg:hidden">
-				{file.invoices.map(invoice => (
-					<li key={invoice.id} className="px-4 py-3 text-sm">
-						<div className="flex items-start justify-between gap-3">
-							<div className="min-w-0">
-								<p className="font-mono text-xs font-medium">{invoice.number}</p>
-								<p className="font-medium">{period(invoice.period)}</p>
-								<p className="text-xs text-muted">Cuota {invoice.externalId} · contrato {invoice.contractId}</p>
-							</div>
-							<div className="shrink-0 text-right">
-								<p className="tabular font-semibold">{money(invoice.balanceCents, invoice.currency)}</p>
-								<p className="tabular text-xs text-muted">de {money(invoice.totalCents, invoice.currency)}</p>
-							</div>
-						</div>
-						<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
-							{invoice.status === 'paid' ? <Badge tone="success">Pagada el {date(invoice.paidOn)}</Badge> : <Badge tone="warning">Abierta</Badge>}
-							<span>Vence {date(invoice.dueDate)} · corte {date(invoice.cutoffDate)}</span>
-						</div>
-						{invoice.status === 'open' && invoice.ispBalanceCents !== null && (
-							<p className="mt-1 text-xs text-amber-800">Abono parcial: el ISP informa saldo {money(invoice.ispBalanceCents, invoice.currency)}</p>
-						)}
-					</li>
-				))}
-			</ul>
-			<Table wrapperClassName="hidden lg:block">
-				<thead>
-					<tr>
-						<Th>Factura</Th><Th>Cuota · contrato</Th><Th>Periodo</Th><Th>Vence</Th><Th>Corte</Th>
-						<Th className="text-right">Total</Th><Th className="text-right">Saldo</Th><Th>Estado</Th>
-					</tr>
-				</thead>
-				<tbody>
-					{file.invoices.map(invoice => (
-						<Tr key={invoice.id}>
-							<Td className="whitespace-nowrap font-mono text-xs font-medium">{invoice.number}</Td>
-							<Td className="whitespace-nowrap font-mono text-xs">{invoice.externalId}<div className="text-muted">contrato {invoice.contractId}</div></Td>
-							<Td className="min-w-40">{period(invoice.period)}<div className="text-xs text-muted">{invoice.label}</div></Td>
-							<Td className="whitespace-nowrap">{date(invoice.dueDate)}</Td>
-							<Td className="whitespace-nowrap">{date(invoice.cutoffDate)}</Td>
-							<Td className="tabular whitespace-nowrap text-right">{money(invoice.totalCents, invoice.currency)}</Td>
-							<Td className="tabular whitespace-nowrap text-right font-medium">{money(invoice.balanceCents, invoice.currency)}</Td>
-							<Td className="whitespace-nowrap">
-								{invoice.status === 'paid' ? (
-									<>
-										<Badge tone="success">Pagada</Badge>
-										<div className="mt-1 text-xs text-muted">{date(invoice.paidOn)}</div>
-									</>
-								) : (
-									<>
-										<Badge tone="warning">Abierta</Badge>
-										{invoice.ispBalanceCents !== null && (
-											<div className="mt-1 max-w-48 whitespace-normal text-xs text-amber-800">Abono parcial: el ISP informa saldo {money(invoice.ispBalanceCents, invoice.currency)}</div>
-										)}
-									</>
-								)}
-							</Td>
-						</Tr>
-					))}
-				</tbody>
-			</Table>
-		</Card>
+		<li>
+			<button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-left hover:bg-canvas/60">
+				<span className="min-w-0 flex-[1_1_220px]">
+					<span className="block font-medium">{capitalize(periodLong(invoice.period))}</span>
+					<span className="block text-xs text-muted">{invoice.number} · contrato {invoice.contractId}</span>
+					{invoice.ispBalanceCents !== null && (
+						<span className="mt-1 block text-xs text-amber-800">Abono parcial: en el ISP quedan {money(invoice.ispBalanceCents, invoice.currency)} por cobrar.</span>
+					)}
+				</span>
+				<span className={cn('text-xs', age > 30 ? 'text-amber-800' : 'text-muted')}>{age > 0 ? `Vencida hace ${age} días` : `Vence el ${date(invoice.dueDate)}`}</span>
+				<span className="tabular w-28 text-right font-medium">{money(invoice.balanceCents, invoice.currency)}</span>
+				<ChevronDown className={cn('size-4 text-muted transition-transform', open && 'rotate-180')} />
+			</button>
+			{open && (
+				<dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-t border-line/70 bg-canvas/50 px-5 py-4 sm:grid-cols-4">
+					<Field label="Factura en Cobrix"><span className="font-mono">{invoice.number}</span></Field>
+					<Field label="Cuota del administrador"><span className="font-mono">{invoice.externalId}</span></Field>
+					<Field label="Contrato"><span className="font-mono">{invoice.contractId}</span></Field>
+					<Field label="Periodo">{invoice.label}</Field>
+					<Field label="Vencimiento">{date(invoice.dueDate)}</Field>
+					<Field label="Corte">{date(invoice.cutoffDate)}</Field>
+					<Field label="Total">{money(invoice.totalCents, invoice.currency)}</Field>
+					<Field label="Saldo">{money(invoice.balanceCents, invoice.currency)}</Field>
+				</dl>
+			)}
+		</li>
 	)
 }
 
 export function ExpedientePage() {
 	const { id = '' } = useParams()
 	const { version } = useRuns()
-	const { data: file, error, loading } = useAsync(() => api.customer(id), [id, version])
+	const { data, error, loading } = useAsync(async () => {
+		const [file, summary] = await Promise.all([api.customer(id), api.summary()])
+		return { file, today: summary.today }
+	}, [id, version])
 
 	if (error) return <ErrorNotice title="No se pudo abrir el expediente" message={error.message} action={<Link to="/clientes" className="font-medium underline">Volver a Clientes</Link>} />
-	if (loading && !file) return <div className="space-y-4"><Skeleton className="h-16" /><Skeleton className="h-24" /><Skeleton className="h-72" /></div>
-	if (!file) return null
+	if (loading && !data) return <div className="space-y-4"><Skeleton className="h-36" /><Skeleton className="h-72" /></div>
+	if (!data) return null
 
+	const { file, today } = data
 	const { customer } = file
-	const open = file.invoices.filter(invoice => invoice.status === 'open')
+	const open = file.invoices.filter(invoice => invoice.status === 'open').sort((a, b) => a.period.localeCompare(b.period) || a.contractId - b.contractId)
+	const paid = file.invoices.filter(invoice => invoice.status === 'paid')
 	const debt = open.reduce((sum, invoice) => sum + invoice.balanceCents, 0)
+	const oldest = open[0]
+	const age = oldest ? daysBetween(oldest.dueDate, today) : null
+	const situation = SITUATION[situationOf(debt, age)]
+	const partial = open.some(invoice => invoice.ispBalanceCents !== null)
 
 	return (
 		<>
-			<PageHeader
-				back={{ to: '/clientes', label: 'Clientes' }}
-				title={customer.name}
-				meta={<><span>{customer.personType === 'juridica' ? 'Persona jurídica' : 'Persona natural'}</span><span className="font-mono">· {customer.document}</span></>}
-			/>
+			<PageHeader back={{ to: '/clientes', label: 'Clientes' }} title={customer.name}
+				meta={<><Badge tone={situation.tone}>{situation.label}</Badge>{partial && <Badge tone="warning">Abono parcial</Badge>}<span>{customer.personType === 'juridica' ? 'Persona jurídica' : 'Persona natural'} · <span className="font-mono">{customer.document}</span></span></>} />
 
-			<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-				<StatCard label="Deuda abierta" value={money(debt)} tone="primary" />
-				<StatCard label="Facturas abiertas" value={open.length} tone={open.length ? 'warning' : undefined} />
-				<StatCard label="Facturas pagadas" value={file.invoices.length - open.length} tone="success" />
-				<StatCard label="Contratos" value={file.contracts.length} />
-			</div>
-
-			<div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-				<Card>
-					<CardHeader title="Datos del cliente" />
-					<CardBody>
-						<dl>
-							<Row label="ID en Cobrix"><span className="font-mono">{customer.id}</span></Row>
-							<Row label="Documento"><span className="font-mono">{customer.document}</span></Row>
-							<Row label="Correo">{customer.email ? <a href={`mailto:${customer.email}`} className="text-primary hover:underline">{customer.email}</a> : <span className="text-muted">Sin correo</span>}</Row>
-							<Row label="Teléfono">{customer.phone ?? <span className="text-muted">Sin teléfono</span>}</Row>
-							<Row label="Origen">Administrador de facturas · contrato {customer.sourceContractId}</Row>
-							<Row label="Creado">{dateTime(customer.createdAt)}</Row>
-						</dl>
-					</CardBody>
-				</Card>
-				<Card>
-					<CardHeader title="Contratos en el administrador" />
-					<ul className="divide-y divide-line">
-						{file.contracts.map(contract => (
-							<li key={contract.id} className="flex flex-wrap items-start justify-between gap-3 px-5 py-3.5 text-sm">
-								<div className="min-w-0">
-									<p className="font-mono font-medium">{contract.id}</p>
-									{contract.address && <p className="mt-0.5 text-muted">{contract.address}</p>}
-									<p className="mt-0.5 text-muted">Sucursal {contract.branch}</p>
-								</div>
-								<div className="text-right">
-									<Badge tone={CONTRACT_STATUS_TONE[contract.status] ?? 'neutral'}>{contract.status}</Badge>
-									<p className="mt-1 font-medium">{contract.plan}</p>
-									<p className="tabular text-muted">{money(contract.planPriceCents, contract.currency)} al mes</p>
-								</div>
-							</li>
-						))}
-					</ul>
+			{/* How much, since when, and how to reach them. */}
+			<div className="grid gap-4 lg:grid-cols-3">
+				<div className="rounded-xl bg-indigo-950 p-5 text-white lg:col-span-1">
+					<p className="text-sm text-indigo-200">Debe</p>
+					<p className="tabular mt-1 text-4xl font-semibold tracking-tight">{money(debt)}</p>
+					<p className="mt-1 text-sm text-indigo-200">
+						{open.length ? <>{plural(open.length, 'factura abierta', 'facturas abiertas')}{oldest && age !== null && age > 0 && <> · la más antigua vencida hace {age} días</>}</> : 'No tiene facturas abiertas'}
+					</p>
+				</div>
+				<Card className="flex flex-col justify-between gap-4 p-5 lg:col-span-2">
+					<dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+						<Field label="Correo">{customer.email ?? <span className="text-muted">Sin correo</span>}</Field>
+						<Field label="Teléfono">{customer.phone ?? <span className="text-muted">Sin teléfono</span>}</Field>
+						<Field label="Documento"><span className="font-mono">{customer.document}</span></Field>
+						<Field label="ID en Cobrix"><span className="font-mono">{customer.id}</span></Field>
+						<Field label="Origen">Sistema del ISP · contrato {customer.sourceContractId}</Field>
+						<Field label="Cliente desde">{dateTime(customer.createdAt)}</Field>
+					</dl>
+					<div className="flex flex-wrap gap-2">
+						{customer.email && <a href={`mailto:${customer.email}`} className={buttonVariants({ size: 'lg' })}><Mail /> Enviar correo</a>}
+						{customer.phone && <a href={`tel:${customer.phone}`} className={buttonVariants({ variant: 'secondary', size: 'lg' })}><Phone /> Llamar · {customer.phone}</a>}
+					</div>
 				</Card>
 			</div>
 
-			<Invoices file={file} />
+			<div className="mt-10 grid gap-x-6 gap-y-10 lg:grid-cols-3">
+				<div className="space-y-10 lg:col-span-2">
+					<Section title="Por cobrar" description="De la más antigua a la más reciente. Toca una factura para ver su detalle." className="mt-0">
+						<Card>
+							{open.length === 0
+								? <p className="px-5 py-8 text-center text-sm text-muted">No tiene facturas abiertas.</p>
+								: <ul className="divide-y divide-line/70">{open.map(invoice => <OpenInvoice key={invoice.id} invoice={invoice} today={today} />)}</ul>}
+						</Card>
+					</Section>
+					{paid.length > 0 && (
+						<Section title="Pagadas" className="mt-0">
+							<Card>
+								<ul className="divide-y divide-line/70">
+									{paid.map(invoice => (
+										<li key={invoice.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-sm">
+											<span className="min-w-0 flex-[1_1_240px]">
+												<span className="block font-medium">{capitalize(periodLong(invoice.period))}</span>
+												<span className="block text-xs text-muted">{invoice.number} · cuota {invoice.externalId} · pagada en el ISP el {date(invoice.paidOn)}{invoice.paidByInvoice && ` con el recibo ${invoice.paidByInvoice}`}</span>
+											</span>
+											<Badge tone="success">Pagada</Badge>
+											<span className="tabular w-28 text-right font-medium text-emerald-700">{money(invoice.totalCents, invoice.currency)}</span>
+										</li>
+									))}
+								</ul>
+							</Card>
+						</Section>
+					)}
+				</div>
 
-			<Card className="mt-6">
-				<CardHeader title="Historial" />
-				<ol className="px-5 py-4">
-					{file.events.map((event, index) => {
-						const info = EVENT[event.kind as keyof typeof EVENT] ?? EVENT.invoice_imported
-						const Icon = info.icon
-						return (
-							<li key={event.id} className="relative flex gap-3 pb-5 last:pb-0">
-								{index < file.events.length - 1 && <span aria-hidden className="absolute left-[15px] top-8 h-[calc(100%-2rem)] w-px bg-line" />}
-								<span className={`flex size-8 shrink-0 items-center justify-center rounded-full ${info.color}`}><Icon className="size-4" /></span>
-								<div className="min-w-0 pt-1 text-sm">
-									<p>
-										<span className="font-medium">{info.label}</span>
-										{event.invoiceNumber && <span className="ml-1.5 font-mono text-xs text-muted">{event.invoiceNumber}</span>}
-									</p>
-									<p className="text-muted">{event.detail}</p>
-									<p className="mt-0.5 text-xs text-muted">
-										{dateTime(event.at)} · <Link to={`/sincronizacion/${event.runId}`} className="hover:text-primary hover:underline">corrida #{event.runId}</Link>
-									</p>
-								</div>
-							</li>
-						)
-					})}
-				</ol>
-			</Card>
+				<div className="space-y-10">
+					<Section title="Contratos en el ISP" className="mt-0">
+						<Card>
+							<ul className="divide-y divide-line/70">
+								{file.contracts.map(contract => {
+									const status = CONTRACT_STATUS[contract.status] ?? { label: contract.status, tone: 'neutral' as const }
+									return (
+										<li key={contract.id} className="px-5 py-3 text-sm">
+											<div className="flex items-start justify-between gap-2">
+												<p className="font-medium">{contract.plan}</p>
+												<Badge tone={status.tone}>{status.label}</Badge>
+											</div>
+											<p className="tabular text-muted">{money(contract.planPriceCents, contract.currency)} al mes · sucursal {contract.branch}</p>
+											<p className="text-xs text-muted">Contrato {contract.id}{contract.address && ` · ${contract.address}`}</p>
+										</li>
+									)
+								})}
+							</ul>
+						</Card>
+					</Section>
+					<Section title="Historial" className="mt-0">
+						<Card>
+							<ol className="px-5 py-4">
+								{file.events.map((event, index) => {
+									const info = EVENT[event.kind as keyof typeof EVENT] ?? EVENT.invoice_imported
+									const Icon = info.icon
+									return (
+										<li key={event.id} className="relative flex gap-3 pb-5 last:pb-0">
+											{index < file.events.length - 1 && <span aria-hidden className="absolute left-[15px] top-8 h-[calc(100%-2rem)] w-px bg-line" />}
+											<span className={`flex size-8 shrink-0 items-center justify-center rounded-full ${info.color}`}><Icon className="size-4" /></span>
+											<div className="min-w-0 pt-1 text-sm">
+												<p className="font-medium">{info.label}{event.invoiceNumber && <span className="ml-1.5 font-mono text-xs font-normal text-muted">{event.invoiceNumber}</span>}</p>
+												<p className="text-muted">{event.detail}</p>
+												<p className="mt-0.5 text-xs text-muted">{dateTime(event.at)} · <Link to={`/sincronizacion/${event.runId}`} className="hover:text-primary hover:underline">sincronización #{event.runId}</Link></p>
+											</div>
+										</li>
+									)
+								})}
+							</ol>
+						</Card>
+					</Section>
+				</div>
+			</div>
 		</>
 	)
 }

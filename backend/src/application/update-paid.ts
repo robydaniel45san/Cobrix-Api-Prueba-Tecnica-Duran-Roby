@@ -91,7 +91,7 @@ export async function runPaid(deps: SyncDeps, options: RunOptions): Promise<RunO
 					ispBalances.push({ id: invoice.id, cents: verdict.ispBalanceCents })
 					count('invoicesPartiallyPaidAtIsp')
 					items.push({ ...base, result: 'partial',
-						detail: `abono parcial: el administrador debe ${usd(verdict.ispBalanceCents)} y Cobrix ${usd(invoice.balanceCents)}. Sigue abierta: solo se aplican cuotas saldadas.` })
+						detail: `abono parcial: en el ISP quedan ${usd(verdict.ispBalanceCents)} por cobrar de ${usd(invoice.balanceCents)}. Sigue abierta hasta que se salde.` })
 					break
 				case 'still_open':
 					ispBalances.push({ id: invoice.id, cents: null })

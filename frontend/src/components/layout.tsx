@@ -4,7 +4,8 @@
  *     overlay, Escape, focus trap, scroll lock);
  *   - tablet (768–1279 px): icon rail, always visible, expandable;
  *   - desktop (≥ 1280 px): full sidebar, collapsible to the icon rail (remembered per browser).
- * Navigation is grouped by category: Cartera and Integración.
+ * Navigation is grouped by the operator's tasks: Cobranza and Sistema del ISP. A status strip on
+ * every screen tells whether the ISP data is up to date and offers «Sincronizar ahora».
  */
 
 import * as Dialog from '@radix-ui/react-dialog'
@@ -12,10 +13,12 @@ import { ArrowLeft, LayoutDashboard, Menu, PanelLeftClose, PanelLeftOpen, Refres
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
-import { api, type Company } from '@/lib/api'
+import { api, type Company, type Summary } from '@/lib/api'
+import { dateTime } from '@/lib/format'
 import { useAsync, useSettingsVersion } from '@/lib/hooks'
 import { cn } from '@/lib/utils'
 import { useRuns } from './runs'
+import { buttonVariants } from './ui/button'
 
 interface NavItem {
 	readonly to: string
@@ -26,14 +29,14 @@ interface NavItem {
 
 const NAV_GROUPS: ReadonlyArray<{ readonly label: string; readonly items: readonly NavItem[] }> = [
 	{
-		label: 'Cartera',
+		label: 'Cobranza',
 		items: [
-			{ to: '/', label: 'Resumen', icon: LayoutDashboard, end: true },
+			{ to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
 			{ to: '/clientes', label: 'Clientes', icon: Users, end: false },
 		],
 	},
 	{
-		label: 'Integración',
+		label: 'Sistema del ISP',
 		items: [
 			{ to: '/sincronizacion', label: 'Sincronización', icon: RefreshCw, end: false },
 			{ to: '/configuracion', label: 'Configuración', icon: Settings, end: false },
@@ -146,6 +149,7 @@ export function Layout() {
 	const settingsVersion = useSettingsVersion()
 	const settings = useAsync(() => api.settings(), [version, settingsVersion])
 	const company = settings.data?.company
+	const summary = useAsync(() => api.summary(), [version, settingsVersion])
 	const [collapsed, setCollapsed] = useState(readCollapsed)
 	const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -208,9 +212,43 @@ export function Layout() {
 				</Dialog.Portal>
 			</Dialog.Root>
 
-			<main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 2xl:px-12">
-				<div className="mx-auto w-full max-w-[1200px]"><Outlet /></div>
-			</main>
+			<div className="min-w-0 flex-1">
+				<StatusStrip summary={summary.data} />
+				<main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8 2xl:px-12">
+					<div className="mx-auto w-full max-w-[1200px]"><Outlet /></div>
+				</main>
+			</div>
+		</div>
+	)
+}
+
+/** Whether the ISP data is up to date, on every screen, with the way to fix it. */
+function StatusStrip({ summary }: { summary: Summary | undefined }) {
+	const { progress } = useRuns()
+	const location = useLocation()
+	if (!summary || location.pathname.startsWith('/bienvenida')) return null
+	const lastFailed = summary.lastRuns.find(run => !run.dryRun)?.status === 'failed'
+	const lastApplied = [summary.lastApplied.import, summary.lastApplied.paid]
+		.filter((run): run is NonNullable<typeof run> => run !== null)
+		.sort((a, b) => b.id - a.id)[0]
+	const state = !summary.provider.configured
+		? { dot: 'bg-slate-400', text: <><strong>Sistema del ISP sin conectar</strong> · conéctalo para traer clientes y facturas</>, action: { to: '/bienvenida', label: 'Conectar el ISP' } }
+		: progress
+			? { dot: 'bg-sky-500 animate-pulse', text: <><strong>Sincronizando…</strong> {progress.stage.toLowerCase()}</>, action: null }
+			: lastFailed
+				? { dot: 'bg-rose-500', text: <><strong>La última sincronización falló</strong> · revisa el detalle</>, action: { to: '/sincronizacion', label: 'Ver qué pasó' } }
+				: lastApplied
+					? { dot: 'bg-emerald-500', text: <><strong>Datos del ISP al día</strong> · última sincronización {dateTime(lastApplied.finishedAt ?? lastApplied.startedAt)}</>, action: { to: '/sincronizacion/revisar?que=todo', label: 'Sincronizar ahora' } }
+					: { dot: 'bg-amber-500', text: <><strong>Todavía no se trajo nada del ISP</strong> · empieza con una vista previa</>, action: { to: '/sincronizacion/revisar?que=facturas', label: 'Ver vista previa' } }
+	return (
+		<div className="flex flex-col gap-2 border-b border-line bg-surface px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 2xl:px-12">
+			<p role="status" className="flex min-w-0 items-center gap-2 text-text/80">
+				<span aria-hidden className={cn('size-2 shrink-0 rounded-full', state.dot)} />
+				<span className="min-w-0">{state.text}</span>
+			</p>
+			{state.action && !location.pathname.startsWith('/sincronizacion/revisar') && (
+				<Link to={state.action.to} className={cn(buttonVariants({ size: 'sm' }), 'shrink-0 self-start sm:self-auto')}>{state.action.label}</Link>
+			)}
 		</div>
 	)
 }

@@ -27,6 +27,11 @@ export function period(value: string): string {
 	return year && month ? `${MONTHS[month - 1]} ${year}` : value
 }
 
+/** First letter in capitals only («agosto de 2026» → «Agosto de 2026»). */
+export function capitalize(text: string): string {
+	return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
 export function periodLong(value: string): string {
 	const [year, month] = value.split('-').map(Number)
 	return year && month ? `${MONTHS_LONG[month - 1]} de ${year}` : value
