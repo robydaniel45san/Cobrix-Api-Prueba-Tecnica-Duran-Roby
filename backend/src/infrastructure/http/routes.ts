@@ -7,12 +7,13 @@
  *   PUT  /api/settings/company            200 Settings · 422 validation_failed
  *   PUT  /api/settings/provider           200 Settings · 422 validation_failed
  *   POST /api/settings/provider/test      200 ConnectionTest (ok true/false)
- *   GET  /api/runs?limit=                 200 { runs, inProgress }
+ *   POST /api/settings/provider/sandbox   200 Settings · 404 when no local sandbox runs here
+ *   GET  /api/runs?limit=               200 { runs, inProgress }
  *   POST /api/runs { kind, dryRun }       202 { runId } · 400 · 409 run_in_progress
  *   GET  /api/runs/:id                    200 RunDetail · 404
  *   GET  /api/customers?q=                200 { customers }
  *   GET  /api/customers/:id               200 CustomerFile · 404
- *   GET  /api/events                      text/event-stream (see sse.ts)
+ *   GET  /api/events                      text/event-stream (see server.ts)
  */
 
 import type { InvoiceManagerFactory } from '../../application/ports/invoice-manager.ts'
@@ -33,7 +34,7 @@ export interface RouteDeps {
 	readonly launcher: RunLauncher
 	readonly today: () => string
 	readonly logger: Logger
-	/** Values offered by «Usar el sandbox local» in Configuración. */
+	/** Local sandbox for «Conectar al sandbox local». Its password stays on the server. */
 	readonly sandbox?: { readonly baseUrl: string; readonly username: string; readonly password: string }
 }
 
@@ -55,7 +56,8 @@ type Handler = (request: Request, deps: RouteDeps) => Promise<Response>
 const ok = (body: unknown): Response => ({ status: 200, body })
 
 async function settingsView(deps: RouteDeps) {
-	return { company: await deps.store.settings.getCompany(), provider: await getProvider(deps.store.settings), sandbox: deps.sandbox ?? null }
+	const sandbox = deps.sandbox ? { baseUrl: deps.sandbox.baseUrl, username: deps.sandbox.username } : null
+	return { company: await deps.store.settings.getCompany(), provider: await getProvider(deps.store.settings), sandbox }
 }
 
 const summary: Handler = async (_request, deps) => {
@@ -100,6 +102,20 @@ const testConnection: Handler = async (request, deps) => {
 	}
 }
 
+/** Points the provider at the local sandbox, keeping the import rules. The password never reaches the browser. */
+const connectSandbox: Handler = async (_request, deps) => {
+	if (!deps.sandbox) throw notFound('No hay un sandbox local en este entorno.')
+	const current = await getProvider(deps.store.settings)
+	await saveProvider(deps.store.settings, deps.cipher, {
+		...current,
+		baseUrl: deps.sandbox.baseUrl,
+		username: deps.sandbox.username,
+		password: deps.sandbox.password,
+		maxNewAmount: current.maxNewAmountCents === null ? null : current.maxNewAmountCents / 100,
+	}, deps.logger)
+	return ok(await settingsView(deps))
+}
+
 const launchRun: Handler = async (request, deps) => {
 	const body = await request.body()
 	if (body.kind !== 'import' && body.kind !== 'paid') throw badRequest('Indica el tipo de corrida: «import» o «paid».')
@@ -120,6 +136,7 @@ export const ROUTES: ReadonlyArray<{ method: string; pattern: RegExp; handler: H
 		handler: async (request, deps) => { await saveProvider(deps.store.settings, deps.cipher, await request.body(), deps.logger); return ok(await settingsView(deps)) },
 	},
 	{ method: 'POST', pattern: /^\/api\/settings\/provider\/test$/, handler: testConnection },
+	{ method: 'POST', pattern: /^\/api\/settings\/provider\/sandbox$/, handler: connectSandbox },
 	{
 		method: 'GET', pattern: /^\/api\/runs$/,
 		handler: async (request, deps) => {

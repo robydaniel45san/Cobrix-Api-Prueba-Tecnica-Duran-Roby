@@ -52,10 +52,14 @@ describe('API del panel', () => {
 		}
 	}
 
+	const routeDeps = () => {
+		const { deps, launcher, db } = sandbox.cobrix
+		return { store: deps.store, readDb: db, cipher: deps.cipher, invoiceManager: deps.invoiceManager, launcher, today: deps.today, logger: deps.logger }
+	}
+
 	before(async () => {
 		sandbox = await startSandbox()
-		const { deps, launcher, db } = sandbox.cobrix
-		server = createHttpServer({ store: deps.store, readDb: db, cipher: deps.cipher, invoiceManager: deps.invoiceManager, launcher, today: deps.today, logger: deps.logger })
+		server = createHttpServer(routeDeps())
 		await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
 		base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
 	})
@@ -69,6 +73,24 @@ describe('API del panel', () => {
 		const { json } = await api('GET', '/api/settings')
 		assert.equal(json.provider.hasPassword, true)
 		assert.doesNotMatch(JSON.stringify(json), /cobrix-sandbox|password_encrypted/)
+	})
+
+	it('el sandbox local se conecta del lado del servidor: su contraseña nunca llega al navegador', async () => {
+		const withSandbox = createHttpServer({ ...routeDeps(), sandbox: { baseUrl: sandbox.apiUrl, username: 'cobrix', password: 'cobrix-sandbox' } })
+		await new Promise<void>(resolve => withSandbox.listen(0, '127.0.0.1', resolve))
+		const url = `http://127.0.0.1:${(withSandbox.address() as AddressInfo).port}`
+		try {
+			const settings = await (await fetch(`${url}/api/settings`)).text()
+			assert.doesNotMatch(settings, /cobrix-sandbox/)
+			assert.match(settings, /"sandbox":\{"baseUrl"/)
+			const connected = await fetch(`${url}/api/settings/provider/sandbox`, { method: 'POST' })
+			assert.equal(connected.status, 200)
+			assert.doesNotMatch(await connected.text(), /cobrix-sandbox/)
+		} finally {
+			withSandbox.closeAllConnections()
+			await new Promise(resolve => withSandbox.close(resolve))
+		}
+		assert.equal((await api('POST', '/api/settings/provider/sandbox')).json.error.code, 'not_found', 'sin sandbox en el entorno')
 	})
 
 	it('valida la configuración campo por campo', async () => {

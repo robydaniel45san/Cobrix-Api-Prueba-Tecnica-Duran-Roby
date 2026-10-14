@@ -146,10 +146,21 @@ function ProviderCard({ settings, onSaved }: { settings: Settings; onSaved: (set
 	}
 
 	const sandbox = settings.sandbox
-	const fillSandbox = () => {
-		if (!sandbox) return
-		setForm(current => ({ ...current, baseUrl: sandbox.baseUrl, username: sandbox.username, password: sandbox.password }))
+	/** Saves the sandbox connection on the server (its password never reaches the browser) and tests it. */
+	const connectSandbox = async () => {
+		setTesting(true)
 		setTest(null)
+		try {
+			const saved = await api.connectSandbox()
+			onSaved(saved)
+			notifySettingsChanged()
+			setForm(toForm(saved))
+			setTest(await api.testConnection({}))
+		} catch (error) {
+			setTest({ ok: false, message: error instanceof Error ? error.message : 'No se pudo conectar al sandbox local.' })
+		} finally {
+			setTesting(false)
+		}
 	}
 
 	return (
@@ -159,7 +170,7 @@ function ProviderCard({ settings, onSaved }: { settings: Settings; onSaved: (set
 				description="Conexión con la API del ISP y reglas de importación."
 				actions={
 					<>
-						{sandbox && <Button variant="ghost" size="sm" onClick={fillSandbox} aria-describedby="sandbox-url"><Wand2 /> Usar el sandbox local<span id="sandbox-url" className="sr-only">{sandbox.baseUrl}</span></Button>}
+						{sandbox && <Button variant="ghost" size="sm" onClick={() => void connectSandbox()} disabled={testing} aria-describedby="sandbox-url"><Wand2 /> Conectar al sandbox local<span id="sandbox-url" className="sr-only">{sandbox.baseUrl}</span></Button>}
 						<Button variant="secondary" size="sm" onClick={() => void runTest()} disabled={testing}>
 							{testing ? <Loader2 className="animate-spin" /> : <PlugZap />} Probar conexión
 						</Button>
@@ -262,7 +273,7 @@ export function ConfiguracionPage() {
 			{settings && (
 				<>
 					<CompanyCard settings={settings} onSaved={setSettings} />
-					<ProviderCard key={settings.provider.updatedAt} settings={settings} onSaved={setSettings} />
+					<ProviderCard settings={settings} onSaved={setSettings} />
 				</>
 			)}
 		</>

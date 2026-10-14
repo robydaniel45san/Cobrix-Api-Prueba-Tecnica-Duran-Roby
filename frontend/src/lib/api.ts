@@ -65,7 +65,8 @@ export interface Provider {
 export interface Settings {
 	company: Company
 	provider: Provider
-	sandbox: { baseUrl: string; username: string; password: string } | null
+	/** Local sandbox available in this environment (its password stays on the server). */
+	sandbox: { baseUrl: string; username: string } | null
 }
 
 export interface Summary {
@@ -166,6 +167,7 @@ export const api = {
 	settings: () => request<Settings>('GET', '/api/settings'),
 	saveCompany: (company: Company) => request<Settings>('PUT', '/api/settings/company', company),
 	saveProvider: (provider: Record<string, unknown>) => request<Settings>('PUT', '/api/settings/provider', provider),
+	connectSandbox: () => request<Settings>('POST', '/api/settings/provider/sandbox'),
 	testConnection: (values: Record<string, unknown>) =>
 		request<{ ok: boolean; contracts?: number; message: string; kind?: string }>('POST', '/api/settings/provider/test', values),
 	runs: (limit = 50) => request<{ runs: Run[]; inProgress: Progress | null }>('GET', `/api/runs?limit=${limit}`),
