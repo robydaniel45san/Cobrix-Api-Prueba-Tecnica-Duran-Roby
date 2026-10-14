@@ -116,6 +116,10 @@ export async function runImport(deps: SyncDeps, options: RunOptions): Promise<Ru
 				if (counter) count(counter)
 			}
 			if (contract && customerId && exclusion?.reason !== 'contradictory') knownContracts.push({ contract, customerId })
+			if (exclusion && reading.installments.length === 0) {
+				// Nothing to list per installment (no debt, or the response could not even be read): one row for the contract.
+				items.push(item({ contractId: reading.contractId, customerId, customerName, result: exclusion.reason, detail: exclusion.detail }))
+			}
 			if (!reading.hasDebt && !exclusion) {
 				items.push(item({ contractId: reading.contractId, customerId, customerName, result: 'no_debt', detail: 'el contrato no tiene cuotas pendientes' }))
 			}

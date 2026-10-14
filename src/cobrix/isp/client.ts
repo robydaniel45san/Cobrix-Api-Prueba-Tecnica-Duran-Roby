@@ -61,6 +61,8 @@ export class IspClient {
 	private readonly retries: number
 	private readonly now: () => number
 	private token: { value: string; expiresAt: number } | undefined
+	/** Single flight: concurrent requests that need a token wait for the same login. */
+	private loggingIn: Promise<void> | undefined
 
 	constructor(credentials: IspCredentials, options: IspClientOptions = {}) {
 		let url: URL
@@ -118,8 +120,11 @@ export class IspClient {
 	}
 
 	private async authorization(): Promise<string> {
-		if (!this.token || this.token.expiresAt - RENEW_MARGIN_MS <= this.now()) await this.login()
-		return `Bearer ${(this.token as { value: string }).value}`
+		while (!this.token || this.token.expiresAt - RENEW_MARGIN_MS <= this.now()) {
+			this.loggingIn ??= this.login().finally(() => { this.loggingIn = undefined })
+			await this.loggingIn
+		}
+		return `Bearer ${this.token.value}`
 	}
 
 	private async request(method: 'GET' | 'POST', path: string, options: { body?: unknown; authenticated?: boolean } = {}): Promise<unknown> {
@@ -129,6 +134,7 @@ export class IspClient {
 			const headers: Record<string, string> = { accept: 'application/json' }
 			if (options.body !== undefined) headers['content-type'] = 'application/json'
 			if (authenticated) headers.authorization = await this.authorization()
+			const sentToken = headers.authorization
 
 			let response: Response
 			try {
@@ -158,8 +164,8 @@ export class IspClient {
 
 			const detail = apiMessage(body)
 			if (response.status === 401 && authenticated && !renewed) {
-				// Expired or revoked token: log in again once.
-				this.token = undefined
+				// Expired or revoked token: log in again once. Only drop it if nobody renewed it meanwhile.
+				if (this.token && `Bearer ${this.token.value}` === sentToken) this.token = undefined
 				renewed = true
 				continue
 			}
