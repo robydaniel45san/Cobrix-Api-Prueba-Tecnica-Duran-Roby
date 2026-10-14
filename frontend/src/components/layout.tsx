@@ -288,19 +288,3 @@ export function Section({ title, description, actions, children, className }: { 
 		</section>
 	)
 }
-
-export function StatCard({ label, value, hint, tone, className }: { label: string; value: ReactNode; hint?: ReactNode; tone?: 'default' | 'primary' | 'success' | 'warning'; className?: string }) {
-	return (
-		<div className={cn(
-			// The value always sits right under its label, so neighbouring cards line up even when one has a hint.
-			'flex h-full flex-col rounded-2xl border bg-surface px-5 py-4',
-			tone === 'primary' ? 'border-primary/30 bg-primary-soft/40' : 'border-line',
-			className,
-		)}>
-			<p className="text-xs font-medium text-muted">{label}</p>
-			<p className={cn('tabular mt-1 text-xl font-semibold tracking-tight sm:text-2xl',
-				tone === 'success' && 'text-emerald-700', tone === 'warning' && 'text-amber-700', tone === 'primary' && 'text-primary')}>{value}</p>
-			{hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
-		</div>
-	)
-}

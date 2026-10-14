@@ -17,7 +17,6 @@
 		"typecheck": "tsc --noEmit && tsc --noEmit -p frontend"
 	},
 	"devDependencies": {
-		"@radix-ui/react-alert-dialog": "1.1.23",
 		"@radix-ui/react-dialog": "1.1.23",
 		"@tailwindcss/vite": "4.3.3",
 		"@types/node": "24.3.0",

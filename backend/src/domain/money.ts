@@ -19,10 +19,6 @@ export function toSignedCents(value: unknown): Cents | undefined {
 	return Math.round(number * 100)
 }
 
-export function fromCents(cents: Cents): number {
-	return cents / 100
-}
-
 /** `123500` → `1.235,00`, the Venezuelan way. The currency code is added by the caller. */
 export function formatAmount(cents: Cents): string {
 	return new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(cents / 100)
